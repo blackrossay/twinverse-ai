@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { deleteTwin, getTwin, listVersions, type TwinDetail } from "@/lib/api";
+import { deleteTwin, getTwin, listRuns, listVersions, type SimulationRun, type TwinDetail } from "@/lib/api";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -29,15 +29,17 @@ function TwinView() {
   const router = useRouter();
   const [twin, setTwin] = useState<TwinDetail | null>(null);
   const [versions, setVersions] = useState<number[]>([]);
+  const [runs, setRuns] = useState<SimulationRun[]>([]);
   const [version, setVersion] = useState<number | undefined>(undefined);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     try {
       setError("");
-      const [t, v] = await Promise.all([getTwin(id, version), listVersions(id)]);
+      const [t, v, r] = await Promise.all([getTwin(id, version), listVersions(id), listRuns(id)]);
       setTwin(t);
       setVersions(v);
+      setRuns(r);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load twin");
     }
@@ -166,6 +168,31 @@ function TwinView() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      <Section title={`Simulations (${runs.length})`}>
+        {runs.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            No simulations yet.{" "}
+            <Link href="/sims/new" className="text-violet-300">Launch one</Link>.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {runs.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/sims/${r.id}`}
+                  className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm hover:border-violet-500"
+                >
+                  <span className="font-mono text-xs">{r.id}</span>
+                  <span className="text-xs text-slate-400">
+                    {r.status} · {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
     </main>
   );

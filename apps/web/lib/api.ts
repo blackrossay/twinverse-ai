@@ -158,3 +158,13 @@ export type Comparison = {
 
 export const getComparison = (id: string) =>
   api<Comparison>(`/api/simulations/${id}/comparison`);
+
+export const rerunRun = (
+  id: string,
+  body: {
+    scenario_ids?: string[];
+    variables?: Record<string, Record<string, string>>;
+    objective_overrides?: Record<string, string>;
+    context_overrides?: Record<string, string>;
+  },
+) => api<SimulationRun>(`/api/simulations/${id}/rerun`, { method: "POST", body: JSON.stringify(body) });

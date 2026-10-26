@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { getComparison, getRun, type Comparison, type SimulationRun } from "@/lib/api";
+import {
+  getComparison,
+  getRun,
+  rerunRun,
+  type Comparison,
+  type SimulationRun,
+} from "@/lib/api";
 
 const TERMINAL = ["done", "partial", "failed"];
 
@@ -22,11 +28,18 @@ function statusColor(s: string) {
   return "bg-slate-700 text-slate-200";
 }
 
+type RerunDraft = Record<string, { include: boolean; variables: Record<string, string>; objective: string }>;
+
 function RunView() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [run, setRun] = useState<SimulationRun | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
+  const [parent, setParent] = useState<SimulationRun | null>(null);
+  const [parentComp, setParentComp] = useState<Comparison | null>(null);
   const [evalState, setEvalState] = useState<"idle" | "loading" | "error">("idle");
+  const [draft, setDraft] = useState<RerunDraft>({});
+  const [rerunBusy, setRerunBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -36,18 +49,39 @@ function RunView() {
         const r = await getRun(id);
         if (stop) return;
         setRun(r);
+        setDraft((d) => {
+          if (Object.keys(d).length > 0) return d;
+          const init: RerunDraft = {};
+          for (const s of r.scenarios) {
+            init[s.scenario_id] = { include: true, variables: { ...s.spec.variables }, objective: "" };
+          }
+          return init;
+        });
         if (!TERMINAL.includes(r.status)) {
           setTimeout(poll, 3000);
-        } else if (r.status !== "failed") {
-          setEvalState("loading");
-          try {
-            const c = await getComparison(id);
-            if (!stop) {
-              setComparison(c);
-              setEvalState("idle");
+        } else {
+          if (r.status !== "failed") {
+            setEvalState("loading");
+            try {
+              const c = await getComparison(id);
+              if (!stop) {
+                setComparison(c);
+                setEvalState("idle");
+              }
+            } catch {
+              if (!stop) setEvalState("error");
             }
-          } catch {
-            if (!stop) setEvalState("error");
+          }
+          if (r.parent_run_id) {
+            try {
+              const [p, pc] = await Promise.all([getRun(r.parent_run_id), getComparison(r.parent_run_id)]);
+              if (!stop) {
+                setParent(p);
+                setParentComp(pc);
+              }
+            } catch {
+              /* diff extras are optional */
+            }
           }
         }
       } catch (e) {
@@ -61,7 +95,36 @@ function RunView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [id]);
 
-  if (error) {
+  async function submitRerun(e: React.FormEvent) {
+    e.preventDefault();
+    if (!run) return;
+    const included = Object.entries(draft).filter(([, v]) => v.include);
+    if (included.length === 0) {
+      setError("Include at least one scenario in the rerun.");
+      return;
+    }
+    setRerunBusy(true);
+    setError("");
+    try {
+      const variables: Record<string, Record<string, string>> = {};
+      const objective_overrides: Record<string, string> = {};
+      for (const [sid, v] of included) {
+        variables[sid] = v.variables;
+        if (v.objective.trim()) objective_overrides[sid] = v.objective.trim();
+      }
+      const child = await rerunRun(run.id, {
+        scenario_ids: included.map(([sid]) => sid),
+        variables,
+        objective_overrides,
+      });
+      router.push(`/sims/${child.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Rerun failed");
+      setRerunBusy(false);
+    }
+  }
+
+  if (error && !run) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
         <Link href="/" className="text-sm text-violet-300">← Dashboard</Link>
@@ -78,6 +141,15 @@ function RunView() {
       <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">
         ← Dashboard
       </Link>
+      {run.parent_run_id && (
+        <p className="mt-2 text-xs text-slate-400">
+          Rerun of{" "}
+          <Link href={`/sims/${run.parent_run_id}`} className="font-mono text-violet-300">
+            {run.parent_run_id}
+          </Link>{" "}
+          — the parent run is preserved unchanged.
+        </p>
+      )}
       <div className="mt-3 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Simulation run</h1>
@@ -90,6 +162,12 @@ function RunView() {
           {run.status === "running" ? "running…" : run.status}
         </span>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-200">
+          {error}
+        </p>
+      )}
 
       <div className="mt-6 space-y-6">
         {run.scenarios.map((s) => (
@@ -199,6 +277,136 @@ function RunView() {
           <p className="mt-3 text-xs text-slate-500">
             Scores are model-generated estimates under evaluation/v1; code checks are deterministic.
           </p>
+        </section>
+      )}
+
+      {parent && parentComp && comparison && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+            What changed since {parent.id}
+          </h2>
+          <div className="mt-3 space-y-4">
+            {run.scenarios.map((s) => {
+              const old = parent.scenarios.find((o) => o.spec.template_id === s.spec.template_id);
+              if (!old?.output || !s.output) return null;
+              const newEv = comparison.evaluations.find((e) => e.scenario_id === s.scenario_id);
+              const oldEv = parentComp.evaluations.find((e) => e.scenario_id === old.scenario_id);
+              const varDiff = Object.entries(s.spec.variables).filter(
+                ([k, v]) => old.spec.variables[k] !== v,
+              );
+              return (
+                <article key={s.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-4 text-sm">
+                  <h3 className="font-semibold">{s.spec.title}</h3>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {varDiff.length === 0
+                      ? "Same variables — pure re-sample."
+                      : varDiff.map(([k, v]) => `${k}: ${old.spec.variables[k] ?? "∅"} → ${v}`).join(" · ")}
+                  </p>
+                  {newEv?.evaluated && oldEv?.evaluated && (
+                    <p className="mt-1 text-xs text-slate-300">
+                      Score deltas (new − old): consistency{" "}
+                      {(newEv.identity_consistency?.score ?? 0) - (oldEv.identity_consistency?.score ?? 0) > 0
+                        ? "+"
+                        : ""}
+                      {(newEv.identity_consistency?.score ?? 0) - (oldEv.identity_consistency?.score ?? 0)} ·{" "}
+                      effectiveness{" "}
+                      {(newEv.scenario_effectiveness?.score ?? 0) - (oldEv.scenario_effectiveness?.score ?? 0) > 0
+                        ? "+"
+                        : ""}
+                      {(newEv.scenario_effectiveness?.score ?? 0) - (oldEv.scenario_effectiveness?.score ?? 0)} ·{" "}
+                      adaptation{" "}
+                      {(newEv.adaptation?.score ?? 0) - (oldEv.adaptation?.score ?? 0) > 0 ? "+" : ""}
+                      {(newEv.adaptation?.score ?? 0) - (oldEv.adaptation?.score ?? 0)}
+                    </p>
+                  )}
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400">Before</h4>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-300">{old.output.response_text}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400">After</h4>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-300">{s.output.response_text}</p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {TERMINAL.includes(run.status) && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+            Rerun with changes
+          </h2>
+          <form onSubmit={submitRerun} className="mt-3 space-y-3">
+            {run.scenarios.map((s) => {
+              const d = draft[s.scenario_id] ?? { include: true, variables: { ...s.spec.variables }, objective: "" };
+              return (
+                <div key={s.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={d.include}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          [s.scenario_id]: { ...d, include: e.target.checked },
+                        }))
+                      }
+                      className="accent-violet-600"
+                    />
+                    {s.spec.title}
+                  </label>
+                  {d.include && (
+                    <div className="mt-2 space-y-2 pl-6">
+                      {Object.entries(d.variables).map(([k, v]) => (
+                        <label key={k} className="block text-xs text-slate-400">
+                          {k}
+                          <input
+                            value={v}
+                            onChange={(e) =>
+                              setDraft((prev) => ({
+                                ...prev,
+                                [s.scenario_id]: {
+                                  ...d,
+                                  variables: { ...d.variables, [k]: e.target.value },
+                                },
+                              }))
+                            }
+                            className="mt-0.5 w-full rounded-lg border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+                          />
+                        </label>
+                      ))}
+                      <label className="block text-xs text-slate-400">
+                        Objective override (optional)
+                        <input
+                          value={d.objective}
+                          onChange={(e) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              [s.scenario_id]: { ...d, objective: e.target.value },
+                            }))
+                          }
+                          placeholder="Leave blank to keep the original objective"
+                          className="mt-0.5 w-full rounded-lg border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button
+              type="submit"
+              disabled={rerunBusy}
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+            >
+              {rerunBusy ? "Rerunning…" : "Rerun selected"}
+            </button>
+          </form>
         </section>
       )}
     </main>
