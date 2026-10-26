@@ -91,6 +91,34 @@ class MetaClient:
         )
 
 
+    def generate_image(self, prompt: str, *, model: str | None = None) -> bytes:
+        """Generate a PNG image. Returns raw bytes. No fixture fallback."""
+        import base64
+
+        if self._use_fixture:
+            raise MetaClientError(
+                "image generation needs a live model call: set MODEL_API_KEY"
+            )
+        if not self._settings.model_api_key:
+            raise MetaClientError("MODEL_API_KEY is not set")
+        try:
+            resp = self._live_client().images.generate(
+                model=model or self._settings.meta_model_image,
+                prompt=prompt,
+                size="1024x1024",
+            )
+        except Exception as exc:
+            raise MetaClientError(f"Meta image API request failed: {exc}") from exc
+        data = resp.data[0] if resp.data else None
+        b64 = getattr(data, "b64_json", None) if data else None
+        if not b64:
+            raise MetaClientError("image API returned no image data")
+        try:
+            return base64.b64decode(b64)
+        except Exception as exc:
+            raise MetaClientError(f"image API returned invalid data: {exc}") from exc
+
+
 def _extract_text(response: object) -> str:
     """Defensively pull text out of a Responses API result."""
     output_text = getattr(response, "output_text", None)

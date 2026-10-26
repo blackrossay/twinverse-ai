@@ -81,7 +81,8 @@ def test_partial_rollup(api_client, stub_model_client):
         {"template_id": "negotiation"}, {"template_id": "escalation"}]}).json()["id"]
     run = api_client.get(f"/api/simulations/{run_id}").json()
     assert run["status"] == "partial"
-    assert [s["status"] for s in run["scenarios"]] == ["done", "failed"]
+    # Parallel execution makes assignment nondeterministic; exactly one of each.
+    assert sorted(s["status"] for s in run["scenarios"]) == ["done", "failed"]
 
 
 def test_variable_override_and_snapshot_version(api_client, stub_model_client):

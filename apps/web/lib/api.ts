@@ -159,6 +159,14 @@ export type Comparison = {
 export const getComparison = (id: string) =>
   api<Comparison>(`/api/simulations/${id}/comparison`);
 
+export const apiBase = () => process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const twinImageUrl = (id: string, cacheBuster = 0) =>
+  `${apiBase()}/api/twins/${id}/image?cb=${cacheBuster}`;
+export const createImage = (id: string) =>
+  api<{ twin_id: string; url: string; bytes: number }>(`/api/twins/${id}/image`, {
+    method: "POST",
+  });
+
 export const rerunRun = (
   id: string,
   body: {

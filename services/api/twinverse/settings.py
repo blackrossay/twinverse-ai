@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     twinverse_fixtures: str = "auto"  # auto | on | off
     model_timeout_s: float = 60.0
     twinverse_db_path: str = "data/twinverse.db"
+    twinverse_card_dir: str = "data/cards"
+    meta_model_image: str = "muse-image-1.0"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     @property

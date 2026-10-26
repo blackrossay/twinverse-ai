@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { deleteTwin, getTwin, listRuns, listVersions, type SimulationRun, type TwinDetail } from "@/lib/api";
+import { createImage, deleteTwin, getTwin, listRuns, listVersions, twinImageUrl, type SimulationRun, type TwinDetail } from "@/lib/api";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -31,7 +32,23 @@ function TwinView() {
   const [versions, setVersions] = useState<number[]>([]);
   const [runs, setRuns] = useState<SimulationRun[]>([]);
   const [version, setVersion] = useState<number | undefined>(undefined);
+  const [imgCb, setImgCb] = useState(0);
+  const [imgShown, setImgShown] = useState(true);
+  const [imgBusy, setImgBusy] = useState(false);
   const [error, setError] = useState("");
+
+  async function generateCard() {
+    setImgBusy(true);
+    try {
+      await createImage(id);
+      setImgCb((v) => v + 1);
+      setImgShown(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Card generation failed");
+    } finally {
+      setImgBusy(false);
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -106,7 +123,29 @@ function TwinView() {
         </div>
       </div>
 
-      {p.bio && <p className="mt-4 text-sm text-slate-300">{p.bio}</p>}
+      <div className="mt-4 flex items-start gap-4">
+        {imgShown && (
+          <Image
+            src={twinImageUrl(twin.id, imgCb)}
+            alt={`Identity card for ${twin.name}`}
+            width={112}
+            height={112}
+            unoptimized
+            onError={() => setImgShown(false)}
+            className="h-28 w-28 rounded-xl border border-slate-700 object-cover"
+          />
+        )}
+        <div>
+          {p.bio && <p className="text-sm text-slate-300">{p.bio}</p>}
+          <button
+            onClick={generateCard}
+            disabled={imgBusy}
+            className="mt-2 rounded-lg border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-100 hover:border-slate-400 disabled:opacity-50"
+          >
+            {imgBusy ? "Generating…" : imgShown ? "Regenerate identity card" : "Generate identity card"}
+          </button>
+        </div>
+      </div>
 
       <Section title={`Verified facts (${p.verified_facts.length})`}>
         <ul className="space-y-2">

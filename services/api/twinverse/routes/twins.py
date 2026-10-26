@@ -1,7 +1,9 @@
-"""Twin CRUD + seed endpoints."""
+"""Twin CRUD + seed + identity card endpoints."""
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.responses import FileResponse
 
+from ..identity.cards import build_prompt, card_path, delete_card, save_card
 from ..identity.extraction import extract_identity
 from ..identity.schemas import (
     Fact,
@@ -23,6 +25,10 @@ twins_router = APIRouter(prefix="/api/twins", tags=["twins"])
 
 def get_store() -> IdentityStore:
     return IdentityStore(Settings().twinverse_db_path)
+
+
+def get_card_dir() -> str:
+    return Settings().twinverse_card_dir
 
 
 def get_model_client() -> MetaClient:
@@ -128,7 +134,44 @@ def patch_twin(
 
 
 @twins_router.delete("/{twin_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_twin(twin_id: str, store: IdentityStore = Depends(get_store)) -> Response:
+def delete_twin(
+    twin_id: str,
+    store: IdentityStore = Depends(get_store),
+    card_dir: str = Depends(get_card_dir),
+) -> Response:
     if not store.delete_twin(twin_id):
         raise HTTPException(status_code=404, detail="twin not found")
+    delete_card(twin_id, card_dir)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@twins_router.post("/{twin_id}/image", status_code=status.HTTP_201_CREATED)
+def create_image(
+    twin_id: str,
+    store: IdentityStore = Depends(get_store),
+    card_dir: str = Depends(get_card_dir),
+    client: MetaClient = Depends(get_model_client),
+) -> dict:
+    twin = store.get_twin(twin_id)
+    if twin is None:
+        raise HTTPException(status_code=404, detail="twin not found")
+    try:
+        png = client.generate_image(build_prompt(twin))
+    except MetaClientError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    save_card(twin_id, png, card_dir)
+    return {"twin_id": twin_id, "url": f"/api/twins/{twin_id}/image", "bytes": len(png)}
+
+
+@twins_router.get("/{twin_id}/image")
+def get_image(
+    twin_id: str,
+    store: IdentityStore = Depends(get_store),
+    card_dir: str = Depends(get_card_dir),
+) -> FileResponse:
+    if store.get_twin(twin_id) is None:
+        raise HTTPException(status_code=404, detail="twin not found")
+    path = card_path(twin_id, card_dir)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no identity card yet")
+    return FileResponse(path, media_type="image/png")
