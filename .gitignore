@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.local
+
+# Env & secrets (never commit real keys)
+.env
+.env*.local
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Build artifacts
+dist/
+build/
+coverage/
+htmlcov/
+
+# Demo / submission working files (keep final artifacts only)
+*.mp4
+!docs/demo/*.mp4
+
+# Runtime data (SQLite)
+/data/
+*.db
+*.db-journal

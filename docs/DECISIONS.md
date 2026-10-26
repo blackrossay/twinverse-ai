@@ -1,0 +1,39 @@
+# Decision log
+
+## D1 (2026-10-26) — scaffold + verified Meta integration
+
+- **Repo root = workspace root.** The plan's `twinverse-ai/` is this directory
+  (`meta_hackathon/`); project name TWINVERSE AI is used in packages/docs.
+- **Stack:** FastAPI + Pydantic backend, Next.js + TS + Tailwind frontend,
+  SQLite. Matches master prompt; FastAPI/Pydantic verified installed, Node 24 present.
+- **Meta Model API (verified 2026-10-26 against official docs):**
+  - Docs: `https://dev.meta.ai/docs/overview`, `https://dev.meta.ai/docs/quickstart` (both HTTP 200, inspected).
+  - Base URL `https://api.meta.ai/v1`, OpenAI-SDK compatible, auth via `MODEL_API_KEY` env.
+  - `muse-spark-1.3` = default sim/eval model (quickstart example model).
+  - `muse-wonder-1.0`, `muse-image-1.0`, `muse-voice-transcribe-1.0` verified as listed Model API IDs; P1-only, pending key + credits.
+- **Blocker:** no `MODEL_API_KEY` in environment. Owner action: create key at
+  Model API dashboard → API keys. Until then the model client uses clearly
+  labeled offline fixtures (`TWINVERSE_FIXTURES=auto`); fixtures are dev-only
+  and never submitted as live output.
+- **Hackathon rules (partially verified):** `cerebralvalley.ai` event page fetch
+  blocked (bot protection); `dev.meta.ai/events/` is 404. Dates (Oct 26–Nov 4),
+  tracks (indie/startup), themes, and ~25% Meta-tooling weight come from
+  secondary reports only — owner must confirm submission format/track in the portal.
+- **Demo target:** local run + recorded backup video first; hosted URL is stretch.
+
+## D1 result — backend skeleton verified
+
+- `pytest services/api/tests`: 6 passed, 1 skipped (live smoke test skips
+  honestly without `MODEL_API_KEY` — not counted as green).
+- `/api/health` verified in-process via TestClient (200, correct shape, key
+  mode switching, no secret leakage in response body).
+- Sandbox blocks all socket binds (TCP + Unix), so a live `uvicorn` + `curl`
+  smoke test must run in the owner's terminal:
+  `uvicorn twinverse.main:app --port 8000` then `curl localhost:8000/api/health`.
+  App import + startup completed successfully under uvicorn; only `bind()` failed.
+- `uv` needs `UV_CACHE_DIR=$TMPDIR/uv-cache` inside this sandbox (default
+  `~/.cache/uv` is read-only here); normal `uv` commands work outside it.
+- **First live call verified (2026-10-26):** `test_live_generate_smoke` passed —
+  real `muse-spark-1.3` round trip via `https://api.meta.ai/v1` returned the
+  expected marker. Full suite: 7 passed. Note: trivial prompt took ~30s, so the
+  demo needs progress indicators and the 60s timeout stays.
