@@ -14,7 +14,9 @@ Built for the Meta AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 ## Status
 
-D1–D2 in progress: backend skeleton, live Meta Model API client, identity core.
+D1–D2 done: backend skeleton, live Meta Model API client, twin CRUD API,
+and a working web dashboard (Next.js). Simulations arrive D3–D4.
+Repo: <https://github.com/blackrossay/twinverse-ai>.
 See [docs/DECISIONS.md](docs/DECISIONS.md) for the decision log.
 
 ## Prerequisites
@@ -70,6 +72,19 @@ curl localhost:8000/api/health
   live output. Set `TWINVERSE_FIXTURES=off` to fail loudly instead.
 - SQLite data lives at `data/twinverse.db` (gitignored); override with
   `TWINVERSE_DB_PATH`.
+
+Run the web app (second terminal, from the repo root):
+
+```bash
+cd apps/web
+npm install     # first time only
+npm run dev
+```
+
+Then open <http://localhost:3000> in your browser. The dashboard shows API
+health (live/fixture), your twins, seed data, and the create-twin form.
+It talks to the backend at `http://localhost:8000` (override with
+`NEXT_PUBLIC_API_URL`).
 
 Run tests:
 

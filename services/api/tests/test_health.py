@@ -29,6 +29,11 @@ def test_health_fixture_mode_without_key(client, monkeypatch):
     assert resp.json()["model_mode"] == "fixture"
 
 
+def test_cors_allows_local_web_app(client):
+    resp = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
+    assert resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
 def test_health_live_mode_with_key(client, monkeypatch):
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
     resp = client.get("/api/health")

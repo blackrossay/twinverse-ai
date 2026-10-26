@@ -37,3 +37,17 @@
   real `muse-spark-1.3` round trip via `https://api.meta.ai/v1` returned the
   expected marker. Full suite: 7 passed. Note: trivial prompt took ~30s, so the
   demo needs progress indicators and the 60s timeout stays.
+
+## D2 result + web dashboard (2026-10-27)
+
+- Twin CRUD API shipped: POST/GET/PATCH/DELETE /api/twins, version history,
+  immutable versions, seed endpoint. Suite: 19 passed (incl. 2 live-model tests).
+- Fixed: missing version binding in `update_twin` INSERT (caught by tests).
+- Public repo: https://github.com/blackrossay/twinverse-ai (branch main).
+  Note: an empty `achambok/twinverse-ai` shell was auto-created during setup;
+  leave or delete it from the GitHub UI.
+- Web UI (Next.js 16 + Tailwind v4, `apps/web`): dashboard with live/fixture
+  badge, twin list, seed button; create-twin form (bio → AI extraction);
+  twin detail with facts/hypotheses/style/versions/provenance. `npm run build`
+  green. CORS opened for localhost:3000 only.
+- Sandbox blocks socket binds, so servers start in the owner's terminal.

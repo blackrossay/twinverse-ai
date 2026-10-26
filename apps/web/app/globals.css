@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+body {
+  background: #0a0f1e;
+  color: #e7eaf3;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
