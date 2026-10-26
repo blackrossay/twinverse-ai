@@ -123,7 +123,7 @@ class IdentityStore:
             conn.execute(
                 "INSERT INTO identity_versions (twin_id, version, payload_json,"
                 " created_at) VALUES (?, ?, ?, ?)",
-                (twin_id, payload.model_dump_json(), now),
+                (twin_id, new_version, payload.model_dump_json(), now),
             )
             conn.execute(
                 "UPDATE twins SET current_version = ?, updated_at = ?"

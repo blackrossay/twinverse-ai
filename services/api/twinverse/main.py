@@ -3,9 +3,11 @@
 from fastapi import FastAPI
 
 from .meta_client import default_client
+from .routes.twins import twins_router
 from .settings import settings
 
 app = FastAPI(title="TWINVERSE AI", version="0.1.0")
+app.include_router(twins_router)
 
 
 @app.get("/api/health")

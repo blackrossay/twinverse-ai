@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     meta_model_eval: str = "muse-spark-1.3"
     twinverse_fixtures: str = "auto"  # auto | on | off
     model_timeout_s: float = 60.0
+    twinverse_db_path: str = "data/twinverse.db"
 
     @property
     def fixtures_enabled(self) -> bool:
