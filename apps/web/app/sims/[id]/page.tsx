@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { getRun, type SimulationRun } from "@/lib/api";
+import { getComparison, getRun, type Comparison, type SimulationRun } from "@/lib/api";
 
 const TERMINAL = ["done", "partial", "failed"];
 
@@ -25,6 +25,8 @@ function statusColor(s: string) {
 function RunView() {
   const { id } = useParams<{ id: string }>();
   const [run, setRun] = useState<SimulationRun | null>(null);
+  const [comparison, setComparison] = useState<Comparison | null>(null);
+  const [evalState, setEvalState] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -34,7 +36,20 @@ function RunView() {
         const r = await getRun(id);
         if (stop) return;
         setRun(r);
-        if (!TERMINAL.includes(r.status)) setTimeout(poll, 3000);
+        if (!TERMINAL.includes(r.status)) {
+          setTimeout(poll, 3000);
+        } else if (r.status !== "failed") {
+          setEvalState("loading");
+          try {
+            const c = await getComparison(id);
+            if (!stop) {
+              setComparison(c);
+              setEvalState("idle");
+            }
+          } catch {
+            if (!stop) setEvalState("error");
+          }
+        }
       } catch (e) {
         if (!stop) setError(e instanceof Error ? e.message : "Failed to load run");
       }
@@ -124,6 +139,68 @@ function RunView() {
           </article>
         ))}
       </div>
+
+      {evalState === "loading" && (
+        <p className="mt-8 animate-pulse text-sm text-slate-400">
+          Evaluating outcomes against the rubric… (~1–2 min first time, then cached)
+        </p>
+      )}
+      {evalState === "error" && (
+        <p className="mt-8 text-sm text-amber-300">
+          Comparison unavailable (needs a live model key on the backend).
+        </p>
+      )}
+      {comparison && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+            Comparison
+          </h2>
+          <p className="mt-2 text-sm text-slate-200">{comparison.summary}</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {comparison.evaluations.map((e) => {
+              const det = comparison.deterministic.find((d) => d.scenario_id === e.scenario_id);
+              const title =
+                run.scenarios.find((s) => s.scenario_id === e.scenario_id)?.spec.title ??
+                e.template_id;
+              return (
+                <article key={e.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
+                  <h3 className="text-sm font-semibold">{title}</h3>
+                  {!e.evaluated ? (
+                    <p className="mt-2 text-xs text-slate-400">Not evaluated: {e.skip_reason}</p>
+                  ) : (
+                    <dl className="mt-2 space-y-2 text-xs">
+                      {(
+                        [
+                          ["Consistency", e.identity_consistency],
+                          ["Effectiveness", e.scenario_effectiveness],
+                          ["Adaptation", e.adaptation],
+                        ] as const
+                      ).map(([label, d]) => (
+                        <div key={label}>
+                          <dt className="flex justify-between text-slate-400">
+                            <span>{label} (model est.)</span>
+                            <span className="font-bold text-slate-100">{d?.score}/5</span>
+                          </dt>
+                          <dd className="mt-0.5 text-slate-300">{d?.notes}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                  {det && (
+                    <p className="mt-2 text-xs text-slate-400">
+                      Code checks: {det.checks_passed}/{det.checks_total} ·{" "}
+                      {det.details.filter((c) => !c.passed).map((c) => c.name).join(", ") || "all pass"}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Scores are model-generated estimates under evaluation/v1; code checks are deterministic.
+          </p>
+        </section>
+      )}
     </main>
   );
 }

@@ -132,3 +132,29 @@ export const launchRun = (body: {
 export const getRun = (id: string) => api<SimulationRun>(`/api/simulations/${id}`);
 export const listRuns = (twin_id?: string) =>
   api<SimulationRun[]>(`/api/simulations${twin_id ? `?twin_id=${twin_id}` : ""}`);
+
+export type DimensionScore = { score: number; evidence: string[]; notes: string };
+export type Comparison = {
+  run_id: string;
+  twin_id: string;
+  deterministic: {
+    scenario_id: string;
+    checks_passed: number;
+    checks_total: number;
+    details: { name: string; passed: boolean; detail: string }[];
+  }[];
+  evaluations: {
+    scenario_id: string;
+    template_id: string;
+    evaluated: boolean;
+    skip_reason: string;
+    identity_consistency: DimensionScore | null;
+    scenario_effectiveness: DimensionScore | null;
+    adaptation: DimensionScore | null;
+  }[];
+  summary: string;
+  model: string;
+};
+
+export const getComparison = (id: string) =>
+  api<Comparison>(`/api/simulations/${id}/comparison`);
