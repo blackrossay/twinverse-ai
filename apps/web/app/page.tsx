@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { getHealth, listTwins, seedTwins, type Health, type Twin } from "@/lib/api";
+import { getHealth, listRuns, listTwins, seedTwins, type Health, type SimulationRun, type Twin } from "@/lib/api";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<Health | null>(null);
   const [twins, setTwins] = useState<Twin[]>([]);
+  const [runs, setRuns] = useState<SimulationRun[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       setError("");
-      const [h, t] = await Promise.all([getHealth(), listTwins()]);
+      const [h, t, r] = await Promise.all([getHealth(), listTwins(), listRuns()]);
       setHealth(h);
       setTwins(t);
+      setRuns(r.slice(0, 10));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to reach API");
     }
@@ -82,6 +84,12 @@ export default function Dashboard() {
         >
           New twin
         </Link>
+        <Link
+          href="/sims/new"
+          className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400"
+        >
+          New simulation
+        </Link>
       </div>
 
       <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-slate-400">
@@ -110,6 +118,29 @@ export default function Dashboard() {
           No twins yet — seed the demo personas or create one.
         </p>
       )}
+
+      <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-slate-400">
+        Recent simulations ({runs.length})
+      </h2>
+      <ul className="mt-3 space-y-3">
+        {runs.map((r) => (
+          <li key={r.id}>
+            <Link
+              href={`/sims/${r.id}`}
+              className="block rounded-xl border border-slate-700 bg-slate-900 px-5 py-4 hover:border-violet-500"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm">{r.id}</span>
+                <span className="text-xs text-slate-400">{r.status}</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"} · identity v
+                {r.identity_version} · {new Date(r.created_at).toLocaleString()}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }

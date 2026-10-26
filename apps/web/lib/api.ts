@@ -76,3 +76,59 @@ export const createTwin = (body: { name: string; bio: string }) =>
   api<TwinDetail>("/api/twins", { method: "POST", body: JSON.stringify(body) });
 export const deleteTwin = (id: string) =>
   api<void>(`/api/twins/${id}`, { method: "DELETE" });
+
+export type ScenarioTemplate = {
+  template_id: string;
+  type: string;
+  title: string;
+  context: string;
+  objective: string;
+  constraints: string[];
+  variables: Record<string, string>;
+  counterpart: { name: string; role: string; attitude: string };
+};
+
+export type ScenarioResultView = {
+  scenario_id: string;
+  spec: {
+    template_id: string;
+    title: string;
+    context: string;
+    objective: string;
+    constraints: string[];
+    variables: Record<string, string>;
+    counterpart: { name: string; role: string; attitude: string };
+  };
+  status: "running" | "done" | "failed";
+  output: {
+    response_text: string;
+    decisions: { decision: string; rationale: string }[];
+    assumptions: string[];
+    identity_facts_used: string[];
+    contradictions: { claim: string; issue: string }[];
+    variables_noted: Record<string, string>;
+  } | null;
+  error: string;
+  model: string;
+  latency_ms: number;
+};
+
+export type SimulationRun = {
+  id: string;
+  twin_id: string;
+  identity_version: number;
+  status: "running" | "done" | "partial" | "failed";
+  parent_run_id: string;
+  created_at: string;
+  scenarios: ScenarioResultView[];
+};
+
+export const listTemplates = () => api<ScenarioTemplate[]>("/api/scenarios/templates");
+export const launchRun = (body: {
+  twin_id: string;
+  version?: number;
+  scenarios: { template_id: string; variables?: Record<string, string> }[];
+}) => api<SimulationRun>("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+export const getRun = (id: string) => api<SimulationRun>(`/api/simulations/${id}`);
+export const listRuns = (twin_id?: string) =>
+  api<SimulationRun[]>(`/api/simulations${twin_id ? `?twin_id=${twin_id}` : ""}`);

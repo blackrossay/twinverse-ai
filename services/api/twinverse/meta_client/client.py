@@ -58,7 +58,9 @@ class MetaClient:
             )
         return self._client
 
-    def generate(self, prompt: str, *, model: str | None = None) -> ModelResult:
+    def generate(
+        self, prompt: str, *, model: str | None = None, timeout_s: float | None = None
+    ) -> ModelResult:
         model = model or self._settings.meta_model_sim
         if self._use_fixture:
             return ModelResult(
@@ -75,7 +77,10 @@ class MetaClient:
             )
         started = time.monotonic()
         try:
-            response = self._live_client().responses.create(model=model, input=prompt)
+            live = self._live_client()
+            if timeout_s is not None:
+                live = live.with_options(timeout=timeout_s)
+            response = live.responses.create(model=model, input=prompt)
         except Exception as exc:  # surface provider errors plainly, never fake output
             raise MetaClientError(f"Meta Model API request failed: {exc}") from exc
         return ModelResult(

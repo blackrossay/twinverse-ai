@@ -1,0 +1,87 @@
+"""Simulation launch/poll endpoints + scenario templates."""
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+from ..identity.store import IdentityStore
+from ..meta_client import MetaClient, default_client
+from ..routes.twins import get_store
+from ..settings import Settings
+from ..simulation.engine import execute_run
+from ..simulation.schemas import (
+    RunCreate,
+    ScenarioInput,
+    ScenarioSpec,
+    ScenarioTemplate,
+    SimulationRun,
+)
+from ..simulation.store import SimulationStore
+from ..simulation.templates import resolve_template
+
+router = APIRouter(tags=["simulations"])
+
+
+def get_sim_store() -> SimulationStore:
+    return SimulationStore(Settings().twinverse_db_path)
+
+
+def get_model_client() -> MetaClient:
+    return default_client()
+
+
+def _resolve(inp: ScenarioInput) -> ScenarioSpec:
+    try:
+        t = resolve_template(inp.template_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    variables = dict(t.variables)
+    variables.update(inp.variables)
+    return ScenarioSpec(
+        template_id=t.template_id,
+        type=t.type,
+        title=t.title,
+        context=inp.context_override or t.context,
+        objective=inp.objective_override or t.objective,
+        constraints=list(t.constraints),
+        variables=variables,
+        counterpart=t.counterpart,
+        rubric_id=t.rubric_id,
+    )
+
+
+@router.get("/api/scenarios/templates", response_model=list[ScenarioTemplate])
+def list_templates() -> list[ScenarioTemplate]:
+    from ..simulation.templates import TEMPLATES
+
+    return list(TEMPLATES.values())
+
+
+@router.post("/api/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
+def launch_run(
+    body: RunCreate,
+    background: BackgroundTasks,
+    store: IdentityStore = Depends(get_store),
+    sim_store: SimulationStore = Depends(get_sim_store),
+    client: MetaClient = Depends(get_model_client),
+) -> SimulationRun:
+    twin = store.get_twin(body.twin_id, body.version)
+    if twin is None:
+        raise HTTPException(status_code=404, detail="twin or version not found")
+    specs = [_resolve(s) for s in body.scenarios]
+    run = sim_store.create_run(twin.id, twin.version, specs)
+    background.add_task(execute_run, run.id, twin, specs, client, sim_store)
+    return run
+
+
+@router.get("/api/simulations", response_model=list[SimulationRun])
+def list_runs(
+    twin_id: str | None = None, sim_store: SimulationStore = Depends(get_sim_store)
+) -> list[SimulationRun]:
+    return sim_store.list_runs(twin_id)
+
+
+@router.get("/api/simulations/{run_id}", response_model=SimulationRun)
+def get_run(run_id: str, sim_store: SimulationStore = Depends(get_sim_store)) -> SimulationRun:
+    run = sim_store.get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    return run
