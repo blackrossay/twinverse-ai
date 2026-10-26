@@ -96,3 +96,10 @@ class RunCreate(BaseModel):
     twin_id: str
     version: int | None = None
     scenarios: list[ScenarioInput] = Field(min_length=1, max_length=3)
+
+
+class RerunCreate(BaseModel):
+    scenario_ids: list[str] | None = None  # default: all parent scenarios
+    variables: dict[str, dict[str, str]] = {}  # scenario_id -> variable updates
+    objective_overrides: dict[str, str] = {}
+    context_overrides: dict[str, str] = {}
