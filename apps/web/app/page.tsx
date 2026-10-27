@@ -8,6 +8,7 @@ import { listRuns, listTwins, seedTwins, twinImageUrl, type SimulationRun, type 
 import { Badge, Banner, Skeleton, statusTone, Waveform } from "@/components/ui";
 import { anime as animeMotion, animationScope, springs } from "@/lib/motion";
 import HowItWorks from "@/components/HowItWorks";
+import Logo from "@/components/Logo";
 import { PersonaSwitcher, personaTheme } from "@/components/voice";
 
 function TwinAvatar({ id, name }: { id: string; name: string }) {
@@ -213,6 +214,11 @@ export default function Dashboard() {
             <span className="hidden mono rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black md:inline-flex">New · Live Studio</span>
           </div>
 
+          <div className="mb-7 flex justify-center">
+            <span className="floaty inline-grid place-items-center">
+              <Logo size={58} glow />
+            </span>
+          </div>
           {/* Locked hero copy (owner-approved, do not paraphrase):
               "Ask once. Hear every side of yourself." */}
           <h1 id="heroTitle" className="display mx-auto mt-6 max-w-4xl text-center text-[clamp(2.6rem,7vw,5.6rem)] leading-[0.88] text-white">
@@ -281,7 +287,7 @@ export default function Dashboard() {
 
       {/* Persona workspace — the app entry: one persona, one command */}
       {loaded && twins.length > 0 && (
-        <section aria-label="Persona workspace" className="glass-floating mt-2 rounded-[28px] p-6 md:p-7">
+        <section aria-label="Persona workspace" className="glass-glow mt-2 rounded-[28px] p-6 md:p-7">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">Your persona</p>
             <div className="ml-auto">

@@ -415,3 +415,10 @@ export const rerunRun = (
     context_overrides?: Record<string, string>;
   },
 ) => api<SimulationRun>(`/api/simulations/${id}/rerun`, { method: "POST", body: JSON.stringify(body) });
+
+export type VoiceCatalogue = {
+  cloned: { ready: boolean; engine_ready: boolean; likeness_present: boolean; label: string };
+  elevenlabs: { configured: boolean; voices: { id: string; name: string; category: string }[]; label: string };
+  instant: { ready: boolean; label: string };
+};
+export const getVoiceCatalogue = () => api<VoiceCatalogue>("/api/voice/catalogue");

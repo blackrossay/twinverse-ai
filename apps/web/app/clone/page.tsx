@@ -7,12 +7,15 @@ import {
   deleteLikeness,
   getAvatarStatus,
   getInferenceSettings,
+  getVoiceCatalogue,
+  type VoiceCatalogue,
   likenessPhotoSrc,
   setInferenceSettings,
   uploadLikeness,
   type AvatarStatus,
   type InferenceSettings,
 } from "@/lib/api";
+import Logo from "@/components/Logo";
 import { BackLink, Banner, Button, GhostButton, Section, Skeleton } from "@/components/ui";
 
 const VOICE_SCRIPT =
@@ -23,6 +26,8 @@ const VOICE_SCRIPT =
 export default function ClonePage() {
   const [status, setStatus] = useState<AvatarStatus | null>(null);
   const [inference, setInference] = useState<InferenceSettings | null>(null);
+  const [catalogue, setCatalogue] = useState<VoiceCatalogue | null>(null);
+  const [deviceVoices, setDeviceVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [voice, setVoice] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
@@ -36,9 +41,86 @@ export default function ClonePage() {
   const [saved, setSaved] = useState("");
   const photoRef = useRef<HTMLInputElement>(null);
   const voiceRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [camOn, setCamOn] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recSeconds, setRecSeconds] = useState(0);
+  const [recordedUrl, setRecordedUrl] = useState("");
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      streamRef.current = stream;
+      setCamOn(true);
+      requestAnimationFrame(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      });
+    } catch {
+      setError("Camera's off — allow camera access, or upload a reference photo instead.");
+    }
+  }
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((tr) => tr.stop());
+    streamRef.current = null;
+    setCamOn(false);
+  }
+
+  function capturePhoto() {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 720;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      setPhoto(new File([blob], "photo-capture.png", { type: "image/png" }));
+      stopCamera();
+      setSaved("Photo captured — now record or upload your voice below.");
+    }, "image/png");
+  }
+
+  function startRecording() {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        chunksRef.current = [];
+        const rec = new MediaRecorder(stream);
+        recorderRef.current = rec;
+        rec.ondataavailable = (e) => chunksRef.current.push(e.data);
+        rec.onstop = () => {
+          stream.getTracks().forEach((tr) => tr.stop());
+          const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
+          setVoice(new File([blob], "voice-recording.webm", { type: blob.type }));
+          setRecordedUrl(URL.createObjectURL(blob));
+          setRecording(false);
+          if (timerRef.current) clearInterval(timerRef.current);
+        };
+        rec.start();
+        setRecording(true);
+        setRecSeconds(0);
+        timerRef.current = setInterval(() => setRecSeconds((s) => s + 1), 1000);
+      })
+      .catch(() => setError("Mic's off — allow microphone access, or upload a voice file instead."));
+  }
+
+  function stopRecording() {
+    recorderRef.current?.stop();
+  }
 
   useEffect(() => {
     getAvatarStatus().then(setStatus).catch(() => setStatus(null));
+    getVoiceCatalogue().then(setCatalogue).catch(() => setCatalogue(null));
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const load = () => setDeviceVoices(window.speechSynthesis.getVoices());
+      load();
+      window.speechSynthesis.onvoiceschanged = load;
+    }
     getInferenceSettings()
       .then((s) => {
         setInference(s);
@@ -117,6 +199,7 @@ export default function ClonePage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <BackLink />
+      <Logo size={40} glow className="mb-5" />
       <h1 className="display mt-4 text-5xl leading-[0.95] text-white">
         Your voice.<br />Your face. Live.
       </h1>
@@ -176,15 +259,60 @@ export default function ClonePage() {
               </div>
             )}
 
+
+            {/* Capture in-app: camera photo + mic recording (no files needed) */}
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-semibold text-white">Use your camera</p>
+                {camOn ? (
+                  <div className="mt-3">
+                    <video ref={videoRef} autoPlay playsInline muted className="aspect-square w-full rounded-xl object-cover" />
+                    <div className="mt-3 flex gap-2">
+                      <Button onClick={capturePhoto}>Capture photo</Button>
+                      <GhostButton onClick={stopCamera}>Cancel</GhostButton>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                      Front-facing, good light, look at the lens — this becomes your avatar.
+                    </p>
+                    <div className="mt-3">
+                      <GhostButton onClick={startCamera}>Open camera</GhostButton>
+                    </div>
+                  </>
+                )}
+                {photo && <p className="mt-2 text-xs text-emerald-300">Reference photo ready: {photo.name}</p>}
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-semibold text-white">Record your voice</p>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                  Read the sample script below for ~30 seconds in your natural voice.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {recording ? (
+                    <button onClick={stopRecording}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-red-500 px-5 text-sm font-semibold text-white hover:bg-red-400">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> Stop · {recSeconds}s
+                    </button>
+                  ) : (
+                    <GhostButton onClick={startRecording}>Start recording</GhostButton>
+                  )}
+                  {recordedUrl && <audio controls src={recordedUrl} className="h-10 max-w-full" />}
+                </div>
+                {voice && <p className="mt-2 text-xs text-emerald-300">Voice sample ready: {voice.name}</p>}
+              </div>
+            </div>
+
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <label className="block text-xs font-bold text-zinc-300">
-                Photo — clear, front-facing (jpg/png/webp, ≤10 MB)
+                Or upload a reference photo (jpg/png/webp, ≤10 MB)
                 <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp"
                   onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
                   className="mt-1.5 w-full text-sm text-white file:mr-3 file:min-h-11 file:rounded-full file:border file:border-white/15 file:bg-transparent file:px-4 file:text-xs file:font-bold file:text-white" />
               </label>
               <label className="block text-xs font-bold text-zinc-300">
-                Voice — ~30s of clean speech (wav/mp3/m4a, ≤15 MB)
+                Or upload a voice file (wav/mp3/m4a/webm, ≤15 MB)
                 <input ref={voiceRef} type="file" accept="audio/*"
                   onChange={(e) => setVoice(e.target.files?.[0] ?? null)}
                   className="mt-1.5 w-full text-sm text-white file:mr-3 file:min-h-11 file:rounded-full file:border file:border-white/15 file:bg-transparent file:px-4 file:text-xs file:font-bold file:text-white" />
@@ -272,7 +400,52 @@ export default function ClonePage() {
         )}
       </Section>
 
-      <Section title="3 · Go live destinations">
+
+      <Section title="3 · Voice catalogue">
+        <p className="max-w-xl text-sm leading-relaxed text-zinc-400">
+          Hear the options before you commit. Your cloned voice is the star;
+          device voices are the instant fallback; a hosted catalogue can be
+          switched on server-side for studio-grade realism.
+        </p>
+        <div className="mt-4 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-accent/25 bg-accent/5 px-4 py-3">
+            <span className="text-sm font-semibold text-white">Your cloned voice</span>
+            <span className="text-xs text-zinc-300">
+              {catalogue?.cloned.ready
+                ? "Ready — Talk and Live replies can speak as you."
+                : catalogue?.cloned.engine_ready
+                  ? "Engine ready — save your likeness above to activate."
+                  : "Engine not ready on this server yet."}
+            </span>
+          </div>
+          {deviceVoices.slice(0, 8).map((v) => (
+            <div key={v.voiceURI} className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
+              <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">{v.name}</span>
+              <span className="text-xs text-zinc-400">{v.lang} · device</span>
+              <button
+                onClick={() => {
+                  const u = new SpeechSynthesisUtterance("Hi, I'm one of your instant voices. Your clone will sound like you — I'll hold the fort until it's ready.");
+                  u.voice = v;
+                  window.speechSynthesis.cancel();
+                  window.speechSynthesis.speak(u);
+                }}
+                className="inline-flex min-h-11 items-center rounded-full border border-white/15 px-4 text-xs font-semibold text-white transition hover:border-white/40">
+                Preview
+              </button>
+            </div>
+          ))}
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <span className="text-sm font-semibold text-white">Hosted catalogue (ElevenLabs-style)</span>
+            <span className="text-xs text-zinc-300">
+              {catalogue?.elevenlabs.configured
+                ? `${catalogue.elevenlabs.voices.length} voices available on this server.`
+                : "Optional — set ELEVENLABS_API_KEY on the server to enable studio voices. Your clone never depends on it."}
+            </span>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="4 · Go live destinations">
         <p className="max-w-xl text-sm leading-relaxed text-zinc-400">
           Stream keys are added per stream, right where you publish — open Live Studio,
           start a stream, and paste your YouTube stream key in the Publish panel. Keys

@@ -40,3 +40,4 @@ htmlcov/
 
 # stray local DBs
 **/data/
+processed/

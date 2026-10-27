@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     twinverse_inference_url: str = ""  # e.g. https://inference.yourcloud.example
     twinverse_inference_token: str = ""  # shared secret with the inference service
     inference_timeout_s: float = 900.0
+    # Optional hosted voice (ElevenLabs-style catalogue) for premium realistic
+    # speech; cloned local/cloud voice stays the default and works without it.
+    elevenlabs_api_key: str = ""
     # Accounts: when on, /api/* (except health + auth) requires a bearer token.
     twinverse_auth_required: bool = False
     twinverse_auth_secret: str = ""  # signs session tokens; set in production

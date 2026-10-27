@@ -22,6 +22,25 @@ import { BackLink, Banner, GhostButton, Skeleton, Waveform } from "@/components/
 import { PersonaSwitcher, TranscriptCaption, VoiceOrb, personaTheme } from "@/components/voice";
 
 type VoiceMode = "instant" | "clone" | "silent";
+type VoiceStyle = "natural" | "warm" | "energetic";
+const VOICE_STYLES: Record<VoiceStyle, { rate: number; pitch: number; label: string }> = {
+  natural: { rate: 1, pitch: 1, label: "Natural" },
+  warm: { rate: 0.94, pitch: 0.88, label: "Warm" },
+  energetic: { rate: 1.07, pitch: 1.12, label: "Energetic" },
+};
+
+function pickDeviceVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const en = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
+  const pool = en.length ? en : voices;
+  return (
+    pool.find((v) => /natural|neural|premium|enhanced/i.test(v.name)) ??
+    pool.find((v) => /google us english|samantha|zira|aria/i.test(v.name)) ??
+    pool[0] ??
+    null
+  );
+}
 
 const PENDING = ["queued", "rendering"];
 
@@ -65,6 +84,7 @@ function TalkView() {
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voiceMode, setVoiceMode] = useState<VoiceMode>("instant");
+  const [voiceStyle, setVoiceStyle] = useState<VoiceStyle>("natural");
   const [error, setError] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -134,6 +154,11 @@ function TalkView() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text.replace(/\[OFFLINE FIXTURE[^\]]*\]/, ""));
+    const style = VOICE_STYLES[voiceStyle];
+    utter.rate = style.rate;
+    utter.pitch = style.pitch;
+    const voice = pickDeviceVoice();
+    if (voice) utter.voice = voice;
     utter.onend = () => setSpeaking(false);
     utter.onerror = () => setSpeaking(false);
     setSpeaking(true);
@@ -334,6 +359,20 @@ function TalkView() {
             ))}
           </select>
         </label>
+        {voiceMode === "instant" && (
+          <label className="text-sm font-semibold text-white">
+            Voice style
+            <select
+              value={voiceStyle}
+              onChange={(e) => setVoiceStyle(e.target.value as VoiceStyle)}
+              className="mt-1.5 block min-h-11 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none focus:border-white/40 [&>option]:bg-zinc-900"
+            >
+              {Object.entries(VOICE_STYLES).map(([id, s]) => (
+                <option key={id} value={id}>{s.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="text-sm font-semibold text-white">
           Reply voice
           <select

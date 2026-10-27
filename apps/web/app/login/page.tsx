@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getMe, login, setToken, signup, type User } from "@/lib/api";
+import Logo from "@/components/Logo";
 import { BackLink, Banner, PrimaryButton } from "@/components/ui";
 import { useEffect } from "react";
 
@@ -46,7 +47,8 @@ export default function LoginPage() {
     return (
       <main className="mx-auto max-w-md px-6 py-12">
         <BackLink />
-        <h1 className="display mt-4 text-4xl text-white">You&apos;re in</h1>
+        <Logo size={40} glow className="mb-5" />
+      <h1 className="display mt-4 text-4xl text-white">You&apos;re in</h1>
         <p className="mt-3 text-sm leading-relaxed text-zinc-400">
           Signed in as <span className="font-semibold text-white">{user.email}</span>.
           Your twins, sessions, and streams are one tap away.

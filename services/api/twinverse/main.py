@@ -21,6 +21,7 @@ from .routes.conversations import router as conversations_router
 from .routes.demo import router as demo_router
 from .routes.live import router as live_router
 from .routes.settings import router as settings_router
+from .routes.voice import router as voice_router
 from .routes.simulations import router as simulations_router
 from .routes.twins import twins_router
 from .settings import get_settings
@@ -106,6 +107,7 @@ async def request_context(request: Request, call_next):
 
 
 app.include_router(auth_router)
+app.include_router(voice_router)
 app.include_router(demo_router)
 app.include_router(settings_router)
 app.include_router(twins_router)

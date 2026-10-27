@@ -153,6 +153,12 @@ def clone_voice(script_text: str, ref_audio: Path, out_wav: Path, settings: Sett
 
         converter = ToneColorConverter(str(ckpt / "converter" / "config.json"), device=device)
         converter.load_ckpt(str(ckpt / "converter" / "checkpoint.pth"))
+        # Silero VAD downloads via torch.hub, which prompts interactively on
+        # first use — pre-trust it so background renders never hang.
+        try:
+            torch.hub.load("snakers4/silero-vad", "silero_vad", trust_repo=True)
+        except Exception:
+            pass
         target_se, _ = se_extractor.get_se(str(ref_wav), converter, vad=True)
         source_se = torch.load(
             str(ckpt / "base_speakers" / "ses" / "en-newest.pth"), map_location=device

@@ -5,23 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getHealth, resetDemo, type Health } from "@/lib/api";
 import { anime, springs } from "@/lib/motion";
-
-function Mark() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden className="shrink-0">
-      <defs>
-        <linearGradient id="markGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#00FF88" />
-          <stop offset="100%" stopColor="#D6FF57" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="7" width="4" height="14" rx="2" fill="url(#markGrad)" />
-      <rect x="9" y="3" width="4" height="22" rx="2" fill="#FAF9F6" opacity="0.95" />
-      <rect x="16" y="9" width="4" height="12" rx="2" fill="#FAF9F6" opacity="0.7" />
-      <rect x="23" y="5" width="1.5" height="4" rx="0.75" fill="#B18CFF" />
-    </svg>
-  );
-}
+import Logo from "@/components/Logo";
 
 function HealthBadge() {
   const [health, setHealth] = useState<Health | null>(null);
@@ -224,7 +208,7 @@ export default function Header() {
           >
             <div className="relative">
               <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-accent/20 to-lime/20 blur-[6px] opacity-0 transition group-hover:opacity-100" />
-              <Mark />
+              <Logo size={30} glow />
             </div>
             <span className="display text-[19px] leading-none tracking-[-0.02em] text-white">
               TWINVERSE<span className="italic text-zinc-400">.AI</span>
