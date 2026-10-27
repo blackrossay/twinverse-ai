@@ -47,35 +47,38 @@ function HealthBadge() {
 
   if (offline)
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-3.5 py-1.5 text-[11px] font-bold text-red-300 ring-1 ring-red-500/20">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" /> api offline
+      <span title="API offline — is the backend running?" aria-label="API offline"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full px-2.5 text-xs font-semibold text-red-300">
+        <span className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
+        <span className="hidden sm:inline">Offline</span>
       </span>
     );
-  if (!health) return (
-    <span className="h-6 w-20 animate-pulse rounded-full bg-white/5" />
-  );
+  if (!health) return <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-white/20" aria-hidden />;
+  const live = health.model_mode === "live";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold ring-1 transition ${
-        health.model_mode === "live"
-          ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/20"
-          : "bg-amber-500/10 text-amber-300 ring-amber-500/20"
-      }`}
+      title={live ? `Live model · ${health.model}` : "Offline fixture mode — add a model key for live output"}
+      aria-label={live ? `Live model ${health.model}` : "Offline fixture mode"}
+      className={`inline-flex min-h-11 items-center gap-2 rounded-full px-2.5 text-xs font-semibold ${live ? "text-emerald-300" : "text-amber-300"}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-      {health.model_mode === "live" ? `live · ${health.model}` : "fixture mode"}
+      <span className={`h-2 w-2 animate-pulse rounded-full ${live ? "bg-emerald-400" : "bg-amber-400"}`} />
+      <span className="hidden sm:inline">{live ? "Live" : "Fixture"}</span>
     </span>
   );
 }
 
 const NAV = [
-  { href: "/", label: "Overview", emoji: "◍" },
-  { href: "/council", label: "Council", emoji: "◑" },
-  { href: "/talk", label: "Talk", emoji: "◐" },
-  { href: "/live", label: "Live", emoji: "●" },
-  { href: "/clone", label: "Clone", emoji: "◉" },
-  { href: "/sims/new", label: "New session", emoji: "⟡" },
-  { href: "/twins/new", label: "New twin", emoji: "+" },
+  { href: "/", label: "Overview" },
+  { href: "/council", label: "Council" },
+  { href: "/talk", label: "Talk" },
+  { href: "/live", label: "Live" },
+];
+
+const MENU = [
+  { href: "/twins/new", label: "New twin", hint: "Create a persona from a bio" },
+  { href: "/sims/new", label: "New session", hint: "Council or secretary tasks" },
+  { href: "/clone", label: "Your Clone", hint: "Voice, face, and render settings" },
+  { href: "/login", label: "Account", hint: "Sign in and devices" },
 ];
 
 export default function Header() {
@@ -84,6 +87,24 @@ export default function Header() {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -177,7 +198,7 @@ export default function Header() {
             : "border-white/[0.06] bg-black/40"
         }`}
       >
-        <div className="mx-auto flex max-w-6xl items-center gap-8 px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-2.5">
           <Link
             href="/"
             className="group flex items-center gap-3 magnetic"
@@ -205,14 +226,9 @@ export default function Header() {
               <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-accent/20 to-lime/20 blur-[6px] opacity-0 transition group-hover:opacity-100" />
               <Mark />
             </div>
-            <div className="leading-[0.9]">
-              <span className="display block text-[18px] font-[400] tracking-[-0.02em] text-white">
-                TWINVERSE<span className="italic text-zinc-400">.AI</span>
-              </span>
-              <span className="mono block text-[9px] uppercase tracking-[0.18em] text-zinc-400">
-                  Council · Talk · Live
-              </span>
-            </div>
+            <span className="display text-[19px] leading-none tracking-[-0.02em] text-white">
+              TWINVERSE<span className="italic text-zinc-400">.AI</span>
+            </span>
           </Link>
 
           <nav ref={navRef} aria-label="Primary" className="relative hidden items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.04] p-1 backdrop-blur md:flex">
@@ -233,22 +249,37 @@ export default function Header() {
                       : "text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  <span className="text-[11px] opacity-70">{n.emoji}</span>
                   {n.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
-            <Link href="/login" className="hidden min-h-11 items-center rounded-full border border-white/15 px-4 text-[13px] font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white sm:inline-flex">
-              Account
-            </Link>
-            <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 md:flex">
-              <span className="mono text-[10px] uppercase tracking-wide text-zinc-400">Twins</span>
-              <span className="mono text-[11px] font-medium text-zinc-300">Council · Talk · Live</span>
-            </div>
+          <div className="ml-auto flex items-center gap-2">
             <HealthBadge />
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-white px-5 text-[13px] font-semibold text-black transition hover:bg-zinc-200"
+              >
+                + New
+                <span aria-hidden className={`text-[10px] transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}>▾</span>
+              </button>
+              {menuOpen && (
+                <div role="menu" aria-label="Create and settings"
+                  className="glass-floating absolute right-0 top-[calc(100%+8px)] w-72 rounded-3xl p-2">
+                  {MENU.map((m) => (
+                    <Link key={m.href} href={m.href} role="menuitem" onClick={() => setMenuOpen(false)}
+                      className="block rounded-2xl px-4 py-3 transition hover:bg-white/[0.06]">
+                      <span className="block text-sm font-semibold text-white">{m.label}</span>
+                      <span className="mt-0.5 block text-xs text-zinc-400">{m.hint}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
