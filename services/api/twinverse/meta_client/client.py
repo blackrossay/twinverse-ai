@@ -34,7 +34,7 @@ class MetaClient:
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._client: OpenAI | None = None
+        self._clients: dict[str, OpenAI] = {}
 
     @property
     def mode(self) -> str:
@@ -50,14 +50,30 @@ class MetaClient:
             return False
         return self._settings.fixtures_enabled
 
-    def _live_client(self) -> OpenAI:
-        if self._client is None:
-            self._client = OpenAI(
+    def _live_client(self, api_key: str | None = None) -> OpenAI:
+        key = api_key or self._settings.model_api_key
+        if key not in self._clients:
+            self._clients[key] = OpenAI(
                 base_url=self._settings.meta_model_base_url,
-                api_key=self._settings.model_api_key,
+                api_key=key,
                 timeout=self._settings.model_timeout_s,
             )
-        return self._client
+        return self._clients[key]
+
+    def _with_key_pool(self, call):
+        """Run call(client) against each configured key; rotate on 401/429."""
+        keys = self._settings.api_keys or [self._settings.model_api_key]
+        last_exc: Exception | None = None
+        for key in keys:
+            try:
+                return call(self._live_client(key))
+            except Exception as exc:
+                last_exc = exc
+                status = getattr(exc, "status_code", None)
+                if status not in (401, 403, 429) and len(keys) > 1:
+                    raise
+                continue
+        raise last_exc  # type: ignore[misc]
 
     def generate(
         self, prompt: str, *, model: str | None = None, timeout_s: float | None = None
@@ -78,10 +94,11 @@ class MetaClient:
             )
         started = time.monotonic()
         try:
-            live = self._live_client()
-            if timeout_s is not None:
-                live = live.with_options(timeout=timeout_s)
-            response = live.responses.create(model=model, input=prompt)
+            def _call(live: OpenAI):
+                client = live.with_options(timeout=timeout_s) if timeout_s is not None else live
+                return client.responses.create(model=model, input=prompt)
+
+            response = self._with_key_pool(_call)
         except Exception as exc:  # surface provider errors plainly, never fake output
             raise MetaClientError(f"Meta Model API request failed: {exc}") from exc
         return ModelResult(
@@ -90,7 +107,6 @@ class MetaClient:
             latency_ms=int((time.monotonic() - started) * 1000),
             fixture=False,
         )
-
 
     def generate_image(self, prompt: str, *, model: str | None = None) -> bytes:
         """Generate a PNG image. Returns raw bytes. No fixture fallback."""
@@ -101,10 +117,12 @@ class MetaClient:
         if not self._settings.model_api_key:
             raise MetaClientError("MODEL_API_KEY is not set")
         try:
-            resp = self._live_client().images.generate(
-                model=model or self._settings.meta_model_image,
-                prompt=prompt,
-                size="1024x1024",
+            resp = self._with_key_pool(
+                lambda live: live.images.generate(
+                    model=model or self._settings.meta_model_image,
+                    prompt=prompt,
+                    size="1024x1024",
+                )
             )
         except Exception as exc:
             raise MetaClientError(f"Meta image API request failed: {exc}") from exc

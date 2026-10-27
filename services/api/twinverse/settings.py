@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     model_api_key: str = ""
+    # Extra Meta keys (comma-separated) tried on auth/rate-limit failure —
+    # e.g. hackathon + Muse Code + opencode dashboard keys as one pool.
+    model_api_key_fallbacks: str = ""
     meta_model_base_url: str = "https://api.meta.ai/v1"
     meta_model_sim: str = "muse-spark-1.3"
     meta_model_eval: str = "muse-spark-1.3"
@@ -32,6 +35,12 @@ class Settings(BaseSettings):
     # Accounts: when on, /api/* (except health + auth) requires a bearer token.
     twinverse_auth_required: bool = False
     twinverse_auth_secret: str = ""  # signs session tokens; set in production
+
+    @property
+    def api_keys(self) -> list[str]:
+        keys = [self.model_api_key]
+        keys += [k.strip() for k in self.model_api_key_fallbacks.split(",")]
+        return [k for k in keys if k]
 
     @property
     def fixtures_enabled(self) -> bool:
