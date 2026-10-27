@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import {
@@ -11,31 +10,23 @@ import {
   type Comparison,
   type SimulationRun,
 } from "@/lib/api";
-
-const BodyViewer = dynamic(() => import("@/components/BodyViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-8 text-center text-sm text-slate-400">
-      Loading 3D view…
-    </div>
-  ),
-});
+import { Badge, Banner, Meter, Section, Skeleton } from "@/components/ui";
 
 const TERMINAL = ["done", "partial", "failed"];
 
 export default function RunPage() {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-3xl px-6 py-10 text-sm">Loading…</main>}>
+    <Suspense fallback={<main className="mx-auto max-w-3xl px-6 py-10"><Skeleton /></main>}>
       <RunView />
     </Suspense>
   );
 }
 
-function statusColor(s: string) {
-  if (s === "done") return "bg-emerald-900 text-emerald-200";
-  if (s === "failed") return "bg-red-900 text-red-200";
-  if (s === "partial") return "bg-amber-900 text-amber-200";
-  return "bg-slate-700 text-slate-200";
+function tone(s: string) {
+  if (s === "done") return "green";
+  if (s === "failed") return "red";
+  if (s === "partial") return "amber";
+  return "slate";
 }
 
 type RerunDraft = Record<string, { include: boolean; variables: Record<string, string>; objective: string }>;
@@ -137,103 +128,97 @@ function RunView() {
   if (error && !run) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <Link href="/" className="text-sm text-violet-300">← Dashboard</Link>
-        <p className="mt-6 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-200">
-          {error}
-        </p>
+        <Link href="/" className="text-sm font-bold text-iris-soft">← Overview</Link>
+        <div className="mt-6">
+          <Banner tone="red">{error}</Banner>
+        </div>
       </main>
     );
   }
-  if (!run) return <main className="mx-auto max-w-3xl px-6 py-10 text-sm">Loading…</main>;
-
-  const anyClinical = run.scenarios.some((s) => s.spec.clinical);
-  const regions = run.scenarios.flatMap((s) => s.spec.anatomy);
+  if (!run)
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-10">
+        <Skeleton lines={6} />
+      </main>
+    );
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">
-        ← Dashboard
+      <Link href="/" className="text-sm font-bold text-iris-soft hover:text-mist">
+        ← Overview
       </Link>
-      {anyClinical && (
-        <p className="mt-2 rounded-lg border border-amber-800 bg-amber-950 px-4 py-2 text-xs text-amber-200">
-          Training simulation for clinical education only — not medical advice.
-        </p>
-      )}
       {run.parent_run_id && (
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-dim">
           Rerun of{" "}
-          <Link href={`/sims/${run.parent_run_id}`} className="font-mono text-violet-300">
+          <Link href={`/sims/${run.parent_run_id}`} className="font-mono text-iris-soft">
             {run.parent_run_id}
           </Link>{" "}
           — the parent run is preserved unchanged.
         </p>
       )}
-      <div className="mt-3 flex items-center justify-between gap-4">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Simulation run</h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <h1 className="text-3xl font-extrabold tracking-tight">Simulation run</h1>
+          <p className="mt-1.5 font-mono text-xs text-faint">
             {run.id} · identity v{run.identity_version} · {run.scenarios.length} scenario
             {run.scenarios.length === 1 ? "" : "s"}
           </p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColor(run.status)}`}>
-          {run.status === "running" ? "running…" : run.status}
-        </span>
+        <Badge tone={tone(run.status)}>{run.status === "running" ? "running…" : run.status}</Badge>
       </div>
 
       {error && (
-        <p className="mt-4 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-200">
-          {error}
-        </p>
+        <div className="mt-4">
+          <Banner tone="red">{error}</Banner>
+        </div>
       )}
 
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 space-y-4">
         {run.scenarios.map((s) => (
-          <article key={s.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-4">
+          <article key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-5 py-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-semibold">{s.spec.title}</h2>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor(s.status)}`}>
-                {s.status === "running" ? "running…" : s.status}
-              </span>
+              <h2 className="font-bold">{s.spec.title}</h2>
+              <Badge tone={tone(s.status)}>{s.status === "running" ? "running…" : s.status}</Badge>
             </div>
-            <p className="mt-1 text-xs text-slate-400">{s.spec.objective}</p>
-            {s.spec.anatomy.length > 0 && (
-              <p className="mt-1 text-xs text-slate-400">
-                Regions: {s.spec.anatomy.map((a) => a.label).join(" · ")}
-              </p>
-            )}
+            <p className="mt-1 text-[13px] text-dim">{s.spec.objective}</p>
             {s.status === "running" && (
-              <p className="mt-3 animate-pulse text-sm text-slate-400">
-                Simulating… this takes ~30–90s per scenario on a live model.
-              </p>
+              <div className="mt-4">
+                <Skeleton lines={3} />
+                <p className="mt-2 text-xs text-faint">Simulating… ~30–90s per scenario on a live model.</p>
+              </div>
             )}
             {s.status === "failed" && (
-              <p className="mt-3 rounded-lg bg-red-950 px-3 py-2 text-sm text-red-200">{s.error}</p>
+              <div className="mt-3">
+                <Banner tone="red">{s.error}</Banner>
+              </div>
             )}
             {s.output && (
-              <div className="mt-3 space-y-3 text-sm">
+              <div className="mt-4 space-y-3 border-t border-edge pt-4 text-sm leading-relaxed">
                 <p className="whitespace-pre-wrap">{s.output.response_text}</p>
                 {s.output.decisions.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Decisions</h3>
-                    <ul className="mt-1 list-disc pl-5">
+                    <h3 className="text-xs font-bold text-dim">Decisions</h3>
+                    <ul className="mt-1.5 space-y-1">
                       {s.output.decisions.map((d, i) => (
-                        <li key={i}>
-                          {d.decision}
-                          {d.rationale && <span className="text-slate-400"> — {d.rationale}</span>}
+                        <li key={i} className="flex gap-2 text-sm">
+                          <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-iris" />
+                          <span>
+                            {d.decision}
+                            {d.rationale && <span className="text-dim"> — {d.rationale}</span>}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {s.output.assumptions.length > 0 && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs leading-relaxed text-dim">
                     Assumptions: {s.output.assumptions.join(" · ")}
                   </p>
                 )}
-                <p className="text-xs text-slate-400">
-                  Facts used: {s.output.identity_facts_used.join(", ") || "none"} ·
-                  model {s.model} · {(s.latency_ms / 1000).toFixed(1)}s
+                <p className="font-mono text-[11px] text-faint">
+                  facts [{s.output.identity_facts_used.join(", ") || "none"}] · {s.model} ·{" "}
+                  {(s.latency_ms / 1000).toFixed(1)}s
                 </p>
               </div>
             )}
@@ -241,46 +226,33 @@ function RunView() {
         ))}
       </div>
 
-      {regions.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-            Body twin
-          </h2>
-          <div className="mt-2">
-            <BodyViewer highlights={regions} height={340} />
-          </div>
-        </section>
-      )}
-
       {evalState === "loading" && (
-        <p className="mt-8 animate-pulse text-sm text-slate-400">
-          Evaluating outcomes against the rubric… (~1–2 min first time, then cached)
-        </p>
+        <div className="mt-10">
+          <Skeleton lines={4} />
+          <p className="mt-2 text-xs text-faint">Evaluating against the rubric… (~1–2 min first time, then cached)</p>
+        </div>
       )}
       {evalState === "error" && (
-        <p className="mt-8 text-sm text-amber-300">
-          Comparison unavailable (needs a live model key on the backend).
-        </p>
+        <div className="mt-10">
+          <Banner>Comparison unavailable (needs a live model key on the backend).</Banner>
+        </div>
       )}
       {comparison && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-            Comparison
-          </h2>
-          <p className="mt-2 text-sm text-slate-200">{comparison.summary}</p>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <Section title="Comparison">
+          <p className="text-[15px] leading-relaxed">{comparison.summary}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
             {comparison.evaluations.map((e) => {
               const det = comparison.deterministic.find((d) => d.scenario_id === e.scenario_id);
               const title =
                 run.scenarios.find((s) => s.scenario_id === e.scenario_id)?.spec.title ??
                 e.template_id;
               return (
-                <article key={e.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
-                  <h3 className="text-sm font-semibold">{title}</h3>
+                <article key={e.scenario_id} className="rounded-xl border border-edge bg-panel px-4 py-3.5">
+                  <h3 className="text-sm font-bold">{title}</h3>
                   {!e.evaluated ? (
-                    <p className="mt-2 text-xs text-slate-400">Not evaluated: {e.skip_reason}</p>
+                    <p className="mt-2 text-xs text-dim">Not evaluated: {e.skip_reason}</p>
                   ) : (
-                    <dl className="mt-2 space-y-2 text-xs">
+                    <div className="mt-3 space-y-3">
                       {(
                         [
                           ["Consistency", e.identity_consistency],
@@ -289,37 +261,33 @@ function RunView() {
                         ] as const
                       ).map(([label, d]) => (
                         <div key={label}>
-                          <dt className="flex justify-between text-slate-400">
-                            <span>{label} (model est.)</span>
-                            <span className="font-bold text-slate-100">{d?.score}/5</span>
-                          </dt>
-                          <dd className="mt-0.5 text-slate-300">{d?.notes}</dd>
+                          <p className="mb-1 text-xs text-dim">{label} <span className="text-faint">(model est.)</span></p>
+                          {d && <Meter value={d.score} />}
+                          {d?.notes && <p className="mt-1 text-xs leading-relaxed text-dim">{d.notes}</p>}
                         </div>
                       ))}
-                    </dl>
+                    </div>
                   )}
                   {det && (
-                    <p className="mt-2 text-xs text-slate-400">
-                      Code checks: {det.checks_passed}/{det.checks_total} ·{" "}
-                      {det.details.filter((c) => !c.passed).map((c) => c.name).join(", ") || "all pass"}
+                    <p className="mt-3 border-t border-edge pt-2 text-xs text-faint">
+                      Code checks {det.checks_passed}/{det.checks_total}
+                      {det.details.some((c) => !c.passed) &&
+                        ` · failed: ${det.details.filter((c) => !c.passed).map((c) => c.name).join(", ")}`}
                     </p>
                   )}
                 </article>
               );
             })}
           </div>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-faint">
             Scores are model-generated estimates under evaluation/v1; code checks are deterministic.
           </p>
-        </section>
+        </Section>
       )}
 
       {parent && parentComp && comparison && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-            What changed since {parent.id}
-          </h2>
-          <div className="mt-3 space-y-4">
+        <Section title={`What changed since ${parent.id}`}>
+          <div className="space-y-3">
             {run.scenarios.map((s) => {
               const old = parent.scenarios.find((o) => o.spec.template_id === s.spec.template_id);
               if (!old?.output || !s.output) return null;
@@ -328,59 +296,56 @@ function RunView() {
               const varDiff = Object.entries(s.spec.variables).filter(
                 ([k, v]) => old.spec.variables[k] !== v,
               );
+              const dims = [
+                ["consistency", newEv?.identity_consistency?.score, oldEv?.identity_consistency?.score],
+                ["effectiveness", newEv?.scenario_effectiveness?.score, oldEv?.scenario_effectiveness?.score],
+                ["adaptation", newEv?.adaptation?.score, oldEv?.adaptation?.score],
+              ] as const;
               return (
-                <article key={s.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-4 text-sm">
-                  <h3 className="font-semibold">{s.spec.title}</h3>
-                  <p className="mt-1 text-xs text-slate-400">
+                <article key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-5 py-4 text-sm">
+                  <h3 className="font-bold">{s.spec.title}</h3>
+                  <p className="mt-1 font-mono text-xs text-dim">
                     {varDiff.length === 0
-                      ? "Same variables — pure re-sample."
+                      ? "same variables — pure re-sample"
                       : varDiff.map(([k, v]) => `${k}: ${old.spec.variables[k] ?? "∅"} → ${v}`).join(" · ")}
                   </p>
                   {newEv?.evaluated && oldEv?.evaluated && (
-                    <p className="mt-1 text-xs text-slate-300">
-                      Score deltas (new − old): consistency{" "}
-                      {(newEv.identity_consistency?.score ?? 0) - (oldEv.identity_consistency?.score ?? 0) > 0
-                        ? "+"
-                        : ""}
-                      {(newEv.identity_consistency?.score ?? 0) - (oldEv.identity_consistency?.score ?? 0)} ·{" "}
-                      effectiveness{" "}
-                      {(newEv.scenario_effectiveness?.score ?? 0) - (oldEv.scenario_effectiveness?.score ?? 0) > 0
-                        ? "+"
-                        : ""}
-                      {(newEv.scenario_effectiveness?.score ?? 0) - (oldEv.scenario_effectiveness?.score ?? 0)} ·{" "}
-                      adaptation{" "}
-                      {(newEv.adaptation?.score ?? 0) - (oldEv.adaptation?.score ?? 0) > 0 ? "+" : ""}
-                      {(newEv.adaptation?.score ?? 0) - (oldEv.adaptation?.score ?? 0)}
-                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {dims.map(([label, n, o]) => {
+                        const d = (n ?? 0) - (o ?? 0);
+                        return (
+                          <Badge key={label} tone={d > 0 ? "green" : d < 0 ? "red" : "slate"}>
+                            {label} {d > 0 ? `+${d}` : d}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   )}
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-400">Before</h4>
-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-300">{old.output.response_text}</p>
+                    <div className="rounded-lg bg-abyss p-3">
+                      <h4 className="text-xs font-bold text-faint">Before</h4>
+                      <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-dim">{old.output.response_text}</p>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-400">After</h4>
-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-300">{s.output.response_text}</p>
+                    <div className="rounded-lg bg-abyss p-3">
+                      <h4 className="text-xs font-bold text-faint">After</h4>
+                      <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed">{s.output.response_text}</p>
                     </div>
                   </div>
                 </article>
               );
             })}
           </div>
-        </section>
+        </Section>
       )}
 
       {TERMINAL.includes(run.status) && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-            Rerun with changes
-          </h2>
-          <form onSubmit={submitRerun} className="mt-3 space-y-3">
+        <Section title="Rerun with changes">
+          <form onSubmit={submitRerun} className="space-y-3">
             {run.scenarios.map((s) => {
               const d = draft[s.scenario_id] ?? { include: true, variables: { ...s.spec.variables }, objective: "" };
               return (
-                <div key={s.scenario_id} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                <div key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-4 py-3.5">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-sm font-bold">
                     <input
                       type="checkbox"
                       checked={d.include}
@@ -390,14 +355,14 @@ function RunView() {
                           [s.scenario_id]: { ...d, include: e.target.checked },
                         }))
                       }
-                      className="accent-violet-600"
+                      className="accent-[#7c5cff]"
                     />
                     {s.spec.title}
                   </label>
                   {d.include && (
-                    <div className="mt-2 space-y-2 pl-6">
+                    <div className="mt-3 space-y-2.5 pl-6">
                       {Object.entries(d.variables).map(([k, v]) => (
-                        <label key={k} className="block text-xs text-slate-400">
+                        <label key={k} className="block text-xs font-bold text-dim">
                           {k}
                           <input
                             value={v}
@@ -410,11 +375,11 @@ function RunView() {
                                 },
                               }))
                             }
-                            className="mt-0.5 w-full rounded-lg border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+                            className="mt-1 w-full rounded-lg border border-edge bg-abyss px-2.5 py-1.5 text-sm font-semibold"
                           />
                         </label>
                       ))}
-                      <label className="block text-xs text-slate-400">
+                      <label className="block text-xs font-bold text-dim">
                         Objective override (optional)
                         <input
                           value={d.objective}
@@ -425,7 +390,7 @@ function RunView() {
                             }))
                           }
                           placeholder="Leave blank to keep the original objective"
-                          className="mt-0.5 w-full rounded-lg border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+                          className="mt-1 w-full rounded-lg border border-edge bg-abyss px-2.5 py-1.5 text-sm placeholder:text-faint"
                         />
                       </label>
                     </div>
@@ -436,12 +401,12 @@ function RunView() {
             <button
               type="submit"
               disabled={rerunBusy}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+              className="rounded-lg bg-iris px-4 py-2 text-sm font-bold text-white transition hover:bg-iris-soft hover:text-abyss disabled:opacity-50"
             >
               {rerunBusy ? "Rerunning…" : "Rerun selected"}
             </button>
           </form>
-        </section>
+        </Section>
       )}
     </main>
   );

@@ -15,7 +15,7 @@ GOOD_SIM = json.dumps({
     "assumptions": ["Bid is real"],
     "identity_facts_used": ["f_known"],
     "contradictions": [],
-    "variables_noted": {"time_pressure": "will decide in 3 days"},
+    "variables_noted": {"depth": "noted at requested depth"},
 })
 
 EVAL_JSON = json.dumps({
@@ -37,8 +37,8 @@ def _twin_and_result(fact_ids=("f_known",), output_json=GOOD_SIM):
             Fact(id=fid, statement="s", category="w") for fid in fact_ids]),
     )
     data = json.loads(output_json)
-    spec = ScenarioSpec(template_id="negotiation", type="t", title="t",
-                        context="c", objective="o", variables={"time_pressure": "high"})
+    spec = ScenarioSpec(template_id="council-strategist", type="t", title="t",
+                        context="c", objective="o", variables={"depth": "quick take"})
     result = ScenarioResult(scenario_id="sc_1", spec=spec, status="done",
                             output=SimulationOutput.model_validate(data))
     return twin, result
@@ -67,7 +67,7 @@ def test_comparison_endpoint_and_cache(api_client, stub_model_client):
     stub = stub_model_client(GOOD_SIM, EVAL_JSON, "Negotiation went best.")
     tid = api_client.post("/api/twins", json=STRUCTURED).json()["id"]
     run_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     first = api_client.get(f"/api/simulations/{run_id}/comparison")
     assert first.status_code == 200, first.text
     body = first.json()
@@ -97,7 +97,7 @@ def test_comparison_skips_failed_scenarios(api_client, stub_model_client):
     stub_model_client("bad", "bad", "summary anyway")
     tid = api_client.post("/api/twins", json=STRUCTURED).json()["id"]
     run_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     body = api_client.get(f"/api/simulations/{run_id}/comparison").json()
     assert body["evaluations"][0]["evaluated"] is False
     assert body["deterministic"][0]["checks_total"] == 0
@@ -112,10 +112,10 @@ def test_live_three_scenario_comparison(api_client, monkeypatch):
     monkeypatch.delenv("MODEL_API_KEY", raising=False)
     api_client.post("/api/twins/seed")
     twins = {t["name"]: t for t in api_client.get("/api/twins").json()}
-    tid = twins["Alex Morgan"]["id"]
+    tid = twins["Maya Chen"]["id"]
     run_id = api_client.post("/api/simulations", json={"twin_id": tid, "scenarios": [
-        {"template_id": "negotiation"}, {"template_id": "escalation"},
-        {"template_id": "leadership"}]}).json()["id"]
+        {"template_id": "council-strategist"}, {"template_id": "council-skeptic"},
+        {"template_id": "council-empath"}]}).json()["id"]
     deadline = time.time() + 420
     while time.time() < deadline:
         run = api_client.get(f"/api/simulations/{run_id}").json()

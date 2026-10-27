@@ -3,46 +3,42 @@
 Record on macOS with Cmd+Shift+5 (screen area → record), 1080p min, mic on.
 Do a full dry run first; keep this backup recording even if demoing live.
 
-## 0:00–0:25 — Meet the patient twin
+## 0:00–0:25 — Meet your twin
 
 1. Open http://localhost:3000. Point out the **live** badge (real Meta model).
-2. Click **Seed demo personas**, open **Margaret Alvarez**: 68, first surgery,
-   penicillin allergy. Facts vs dashed "inferred, not verified" hypotheses.
-   One line: "facts and guesses are never mixed."
-3. "This is a fictional training patient — education only, never medical advice."
+2. Click **Seed demo personas**, open **Maya Chen**: freelancer, two retainers,
+   no meetings before 10am. Facts vs dashed "inferred, not verified" hypotheses.
+   One line: "facts and guesses are never mixed — that's what makes it trustworthy."
 
-## 0:25–0:55 — Spawn three encounters
+## 0:25–0:55 — Ask the council
 
-1. **New simulation** → Margaret Alvarez → the three preselected **Patient
-   training** scenarios → Launch. Point out the 3D body twin with the knee
-   marker and the education-only banner.
-2. Narrate while it runs (~40s, all parallel): "one frozen patient snapshot,
-   three isolated encounters — consent briefing, triage call, difficult consult."
-3. Scroll the three independent progress states.
+1. Click **Ask the council** → Maya Chen → "Should I quit my retainers and take
+   the in-house job offer?" → Ask.
+2. Narrate while it runs (~30s, all parallel): "one frozen identity, three
+   minds — the Strategist argues go, the Skeptic argues stop, the Counselor
+   weighs what it costs you as a human."
 
-## 0:55–1:40 — Compare outcomes
+## 0:55–1:40 — Compare the minds
 
-1. When done, scroll to **Comparison**: read the one-paragraph summary aloud.
-2. Open the three score cards: consistency/effectiveness/adaptation with notes,
-   plus deterministic code checks (grounded fact ids, variables acknowledged).
+1. When done, scroll to **Comparison**: read the one-paragraph synthesis aloud.
+2. Open the three verdict cards: Strategist says go, Skeptic says wait,
+   Counselor asks about mornings and weekends — each scored with evidence.
 3. One line: "scores are model estimates with evidence; checks are code."
 
-## 1:40–2:15 — Change a variable
+## 1:40–2:15 — Change a variable, then put it to work
 
-1. Scroll to **Rerun with changes**: set triage-call `pain` to "9/10, can't
-   bear weight", rerun that scenario only.
-2. On the child run, show the parent link ("parent preserved unchanged") and
-   the **What changed** diff: variable delta, before/after responses, score deltas.
+1. Scroll to **Rerun with changes**: flip council `depth` to the deep-dive
+   pre-mortem, rerun one lens. Show the **What changed** diff on the child run.
+2. Quick cut: launch a **secretary-booking** sim — Maya's twin books a client
+   call strictly inside "no meetings before 10am."
 
 ## 2:15–2:45 — Reveal the vision
 
-"Same identity core, same engine — swap the templates and it becomes interview
-coaching, support training, or any roleplay. Today: training encounters with a
-visible body twin. North star: scan-accurate twins for procedure rehearsal.
-One identity. Multiple realities. Measurable outcomes."
-
-(Professional-pack demo: same beats with Alex Morgan + negotiation/escalation/
-leadership, no body viewer.)
+"Today: your twin debates your decisions and handles your calendar. North star:
+that same twin — your face, your voice, your rules — answering your video calls
+when you're camera-shy and running your day. That last mile needs the platform
+owner; we're proving the brain is ready. One identity. Multiple realities.
+Measurable outcomes."
 
 ## If something fails live
 

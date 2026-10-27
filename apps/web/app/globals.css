@@ -1,7 +1,43 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-abyss: #070b16;
+  --color-panel: #0d1428;
+  --color-panel2: #111a33;
+  --color-edge: #1e2a47;
+  --color-iris: #7c5cff;
+  --color-iris-soft: #a48fff;
+  --color-mist: #e9edf5;
+  --color-dim: #9aa6bf;
+  --color-faint: #5d6a8a;
+}
+
 body {
-  background: #0a0f1e;
-  color: #e7eaf3;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--color-abyss);
+  color: var(--color-mist);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: #7c5cff;
+  color: #fff;
+}
+
+/* Faint blueprint grid backdrop for hero areas */
+.bg-blueprint {
+  background-image:
+    linear-gradient(#141d36 1px, transparent 1px),
+    linear-gradient(90deg, #141d36 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-iris-soft);
+  outline-offset: 2px;
 }

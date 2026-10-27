@@ -2,31 +2,39 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { getHealth, listRuns, listTwins, seedTwins, type Health, type SimulationRun, type Twin } from "@/lib/api";
+import { listRuns, listTwins, seedTwins, type SimulationRun, type Twin } from "@/lib/api";
+import { Badge, Banner, Section, Skeleton } from "@/components/ui";
+
+function statusTone(s: string) {
+  if (s === "done") return "green";
+  if (s === "failed") return "red";
+  if (s === "partial") return "amber";
+  return "slate";
+}
 
 export default function Dashboard() {
-  const [health, setHealth] = useState<Health | null>(null);
   const [twins, setTwins] = useState<Twin[]>([]);
   const [runs, setRuns] = useState<SimulationRun[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       setError("");
-      const [h, t, r] = await Promise.all([getHealth(), listTwins(), listRuns()]);
-      setHealth(h);
+      const [t, r] = await Promise.all([listTwins(), listRuns()]);
       setTwins(t);
-      setRuns(r.slice(0, 10));
+      setRuns(r.slice(0, 8));
+      setLoaded(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to reach API");
+      setLoaded(true);
     }
   }, []);
 
   useEffect(() => {
-    // Client-side fetch against the local API; empty state renders first.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [refresh]);
 
   async function seed() {
@@ -43,104 +51,117 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">TWINVERSE AI</h1>
-          <p className="mt-1 text-sm text-slate-300">
-            One identity. Multiple realities. Measurable outcomes.
-          </p>
-        </div>
-        {health && (
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              health.model_mode === "live"
-                ? "bg-emerald-900 text-emerald-200"
-                : "bg-amber-900 text-amber-200"
-            }`}
-          >
-            {health.model_mode === "live" ? `● live · ${health.model}` : "○ fixture mode"}
-          </span>
-        )}
-      </header>
-
-      {error && (
-        <p className="mt-6 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-200">
-          {error}
+    <main className="mx-auto max-w-5xl px-6 pb-10">
+      <div className="relative -mx-6 px-6 pb-8 pt-10">
+        <div className="bg-blueprint pointer-events-none absolute inset-0" aria-hidden />
+        <div className="relative">
+        <p className="text-sm font-bold text-iris-soft">Twin Council · Twin Secretary</p>
+        <h1 className="mt-2 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight">
+          Ask once. Hear every side of yourself.
+        </h1>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-dim">
+          Your twin debates your decision from three angles in parallel — then handles
+          your calls and calendar like you would. Every answer scored with evidence.
         </p>
-      )}
-
-      <div className="mt-8 flex gap-3">
-        <button
-          onClick={seed}
-          disabled={busy}
-          className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-        >
-          {busy ? "Seeding…" : "Seed demo personas"}
-        </button>
-        <Link
-          href="/twins/new"
-          className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400"
-        >
-          New twin
-        </Link>
-        <Link
-          href="/sims/new"
-          className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400"
-        >
-          New simulation
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Link
+            href="/council"
+            className="rounded-lg bg-iris px-5 py-2.5 text-sm font-bold text-white transition hover:bg-iris-soft hover:text-abyss"
+          >
+            Ask the council
+          </Link>
+          <button
+            onClick={seed}
+            disabled={busy}
+            className="rounded-lg border border-edge px-5 py-2.5 text-sm font-bold text-mist transition hover:border-dim disabled:opacity-50"
+          >
+            {busy ? "Seeding…" : "Seed demo personas"}
+          </button>
+          <div className="ml-1 flex gap-5 text-sm">
+            <span><strong className="text-lg font-extrabold">{twins.length}</strong> <span className="text-dim">twins</span></span>
+            <span><strong className="text-lg font-extrabold">{runs.length}</strong> <span className="text-dim">recent runs</span></span>
+          </div>
+        </div>
+        </div>
       </div>
 
-      <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-slate-400">
-        Twins ({twins.length})
-      </h2>
-      <ul className="mt-3 space-y-3">
-        {twins.map((t) => (
-          <li key={t.id}>
-            <Link
-              href={`/twins/${t.id}`}
-              className="block rounded-xl border border-slate-700 bg-slate-900 px-5 py-4 hover:border-violet-500"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">{t.name}</span>
-                <span className="text-xs text-slate-400">v{t.current_version}</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                {t.profile_type} · updated {new Date(t.updated_at).toLocaleString()}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {twins.length === 0 && !error && (
-        <p className="mt-4 text-sm text-slate-400">
-          No twins yet — seed the demo personas or create one.
-        </p>
+      {error && (
+        <div className="mt-6">
+          <Banner tone="red">{error}</Banner>
+        </div>
       )}
 
-      <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-slate-400">
-        Recent simulations ({runs.length})
-      </h2>
-      <ul className="mt-3 space-y-3">
-        {runs.map((r) => (
-          <li key={r.id}>
-            <Link
-              href={`/sims/${r.id}`}
-              className="block rounded-xl border border-slate-700 bg-slate-900 px-5 py-4 hover:border-violet-500"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-sm">{r.id}</span>
-                <span className="text-xs text-slate-400">{r.status}</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"} · identity v
-                {r.identity_version} · {new Date(r.created_at).toLocaleString()}
+      {!loaded ? (
+        <div className="mt-10">
+          <Skeleton lines={5} />
+        </div>
+      ) : (
+        <>
+          <Section
+            title={`Twins (${twins.length})`}
+            action={
+              <Link href="/twins/new" className="text-sm font-bold text-iris-soft hover:text-mist">
+                + New twin
+              </Link>
+            }
+          >
+            {twins.length === 0 ? (
+              <p className="text-sm text-dim">No twins yet — seed the demo personas or create one.</p>
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {twins.map((t) => (
+                  <li key={t.id}>
+                    <Link
+                      href={`/twins/${t.id}`}
+                      className="block rounded-xl border border-edge bg-panel px-5 py-4 transition hover:border-iris"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-bold">{t.name}</span>
+                        <Badge tone="iris">
+                          {t.profile_type} · v{t.current_version}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-faint">
+                        updated {new Date(t.updated_at).toLocaleString()}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          <Section title={`Recent simulations (${runs.length})`}>
+            {runs.length === 0 ? (
+              <p className="text-sm text-dim">
+                No simulations yet.{" "}
+                <Link href="/sims/new" className="font-bold text-iris-soft">
+                  Launch one
+                </Link>
+                .
               </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+            ) : (
+              <ul className="space-y-2">
+                {runs.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      href={`/sims/${r.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-edge bg-panel px-5 py-3 transition hover:border-iris"
+                    >
+                      <span className="font-mono text-[13px]">{r.id}</span>
+                      <span className="flex items-center gap-3 text-xs text-dim">
+                        {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"} · v
+                        {r.identity_version}
+                        <Badge tone={statusTone(r.status)}>{r.status}</Badge>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </>
+      )}
     </main>
   );
 }

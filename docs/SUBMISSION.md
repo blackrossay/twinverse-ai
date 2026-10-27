@@ -4,26 +4,23 @@
 
 **TWINVERSE AI — One identity. Multiple realities. Measurable outcomes.**
 
-TWINVERSE AI is a reusable digital-twin simulation platform built on Meta's
-Model API — demonstrated through a **Patient Twin for clinical training**.
-Create a structured patient identity once (verified facts kept strictly
-separate from confidence-scored behavioral hypotheses), then the Parallel
-Reality Engine runs that frozen snapshot through three isolated training
-encounters in parallel: a pre-op consent briefing, a post-op triage call, and
-a difficult consult about a delayed surgery. The twin plays the patient; a 3D
-body viewer links each scenario to anatomical regions. A comparison dashboard
-scores every outcome against a published rubric (identity consistency,
-scenario effectiveness, adaptation) with quoted evidence, backed by
-deterministic code checks (fact-id grounding, variable acknowledgement).
-Change one variable and rerun: the parent run is preserved byte-identical
-while the diff view shows what changed and why. Training simulation for
-education only — never medical advice.
+TWINVERSE AI is a digital twin that stands in for you — demonstrated through
+the **Twin Council** and **Twin Secretary**. Build your twin once (verified
+facts kept strictly separate from confidence-scored hypotheses), then ask one
+question and hear three parallel sides of yourself: the Strategist makes the
+case for action, the Skeptic stress-tests it, the Counselor weighs the human
+cost — every answer scored against a published rubric with quoted evidence,
+backed by deterministic code checks (fact grounding, variable acknowledgement).
+Then put the same twin to work: it handles booking calls and unknown callers
+strictly within your constraints. Change one variable and rerun: the parent
+run is preserved byte-identical while the diff view shows what changed and why.
 
 Built with `muse-spark-1.3` (extraction, simulation, evaluation) and
 `muse-image-1.0` (identity cards) via the Meta Model API; FastAPI + SQLite
-backend, Next.js + three.js dashboard. The same engine also ships a
-professional pack (negotiation, escalation, leadership). All fixtures are
-labeled; all scores trace to evidence; nothing is mocked in the demo path.
+backend, Next.js dashboard. All fixtures are labeled; all scores trace to
+evidence; nothing is mocked in the demo path. The north star — a photoreal
+twin answering your video calls — needs platform support only a Meta can
+unlock; this demo proves the brain is ready today.
 
 ## Links
 

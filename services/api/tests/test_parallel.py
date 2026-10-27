@@ -58,7 +58,7 @@ def test_scenarios_execute_in_parallel(tmp_path):
             return ModelResult(text=GOOD_SIM, model="stub", latency_ms=400, fixture=False)
 
     twin, sims = _setup(tmp_path)
-    specs = [_spec("negotiation"), _spec("escalation"), _spec("leadership")]
+    specs = [_spec("council-strategist"), _spec("council-skeptic"), _spec("council-empath")]
     run = sims.create_run(twin.id, 1, specs)
     execute_run(run.id, twin, specs, OverlapStub(), sims)
     assert peak == 3, f"expected 3-way overlap, saw peak={peak}"
@@ -72,7 +72,7 @@ def test_scenario_timeout_marks_failed(tmp_path):
             return ModelResult(text=GOOD_SIM, model="stub", latency_ms=2000, fixture=False)
 
     twin, sims = _setup(tmp_path)
-    run = sims.create_run(twin.id, 1, [_spec("negotiation")])
+    run = sims.create_run(twin.id, 1, [_spec("council-strategist")])
     execute_run(run.id, twin, [run.scenarios[0].spec], SlowStub(), sims,
                 scenario_timeout_s=0.3)
     got = sims.get_run(run.id)
@@ -84,14 +84,14 @@ def test_rerun_applies_changes_and_preserves_parent(api_client, stub_model_clien
     stub_model_client(GOOD_SIM)
     tid = api_client.post("/api/twins", json=STRUCTURED).json()["id"]
     parent_id = api_client.post("/api/simulations", json={"twin_id": tid, "scenarios": [
-        {"template_id": "negotiation"}, {"template_id": "escalation"}]}).json()["id"]
+        {"template_id": "council-strategist"}, {"template_id": "council-skeptic"}]}).json()["id"]
     before = api_client.get(f"/api/simulations/{parent_id}").json()
     assert before["status"] == "done"
-    neg_id = [s for s in before["scenarios"] if s["spec"]["template_id"] == "negotiation"][0]["scenario_id"]
+    neg_id = [s for s in before["scenarios"] if s["spec"]["template_id"] == "council-strategist"][0]["scenario_id"]
 
     rerun = api_client.post(f"/api/simulations/{parent_id}/rerun", json={
         "scenario_ids": [neg_id],
-        "variables": {neg_id: {"time_pressure": "extreme — 4 hours"}},
+        "variables": {neg_id: {"depth": "deep dive — steelman plus pre-mortem"}},
     })
     assert rerun.status_code == 202, rerun.text
     child_id = rerun.json()["id"]
@@ -99,7 +99,7 @@ def test_rerun_applies_changes_and_preserves_parent(api_client, stub_model_clien
     child = api_client.get(f"/api/simulations/{child_id}").json()
     assert child["status"] == "done"
     assert len(child["scenarios"]) == 1
-    assert child["scenarios"][0]["spec"]["variables"]["time_pressure"] == "extreme — 4 hours"
+    assert child["scenarios"][0]["spec"]["variables"]["depth"] == "deep dive — steelman plus pre-mortem"
 
     after = api_client.get(f"/api/simulations/{parent_id}").json()
     assert after == before, "parent run must be byte-identical after rerun"
@@ -109,7 +109,7 @@ def test_rerun_validates(api_client, stub_model_client):
     stub_model_client(GOOD_SIM)
     tid = api_client.post("/api/twins", json=STRUCTURED).json()["id"]
     parent_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     assert api_client.post("/api/simulations/run_nope/rerun", json={}).status_code == 404
     bad = api_client.post(f"/api/simulations/{parent_id}/rerun",
                           json={"scenario_ids": ["sc_nope"]})

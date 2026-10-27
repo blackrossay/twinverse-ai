@@ -28,5 +28,6 @@
 - No authentication on the API: run locally or behind your own auth. CORS
   allows only `localhost:3000` by default.
 - SQLite + background tasks suit demo scale, not multi-user production.
-- This build has no medical, legal, or hiring use-case hardening; the
-  leadership/negotiation scenarios are training-style roleplay.
+- This build has no medical, legal, or hiring use-case hardening; council
+  verdicts and secretary transcripts are illustrative starting points, and the
+  UI says the final call is always yours.

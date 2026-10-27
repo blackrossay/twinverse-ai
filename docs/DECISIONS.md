@@ -91,3 +91,20 @@
 - Explicitly NOT claimed: real scan ingestion, surgical physics, physiology
   simulation, diagnosis, or surgical planning. Those are the north star;
   training encounters are the credible today.
+
+## Twin Council pivot (2026-10-27, owner-directed)
+
+- Demo lead is now **Twin Council + Twin Secretary**: the twin as a replica of
+  the user that (a) debates decisions from three parallel lenses (Strategist /
+  Skeptic / Counselor) and (b) handles calls and calendar like the user would.
+- Clean replacement: clinical templates, patient seeds, REGIONS/anatomy schema,
+  and the three.js body viewer removed (all preserved in git history). New
+  seeds are everyday personas (Maya Chen, Leo Park). Engine, eval, and UI
+  shell unchanged — templates, seeds, and pages only.
+- Live probe: 3 council lenses on a real question all `done` (~15–25s each,
+  parallel), genuinely differentiated (action vs risk vs values) and grounded
+  in the twin's facts.
+- Explicitly out of scope (platform physics, stated in pitch): answering
+  third-party video calls with a photoreal avatar, real-time voice dialogue,
+  auto-posting to socials. Demoed: the brain at full power; photoreal
+  stand-in is the north star only a platform owner can unlock.

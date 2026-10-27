@@ -11,13 +11,13 @@ GOOD_SIM = json.dumps({
     "assumptions": ["Competitor bid is real"],
     "identity_facts_used": ["f_abc123"],
     "contradictions": [],
-    "variables_noted": {"time_pressure": "acknowledged 3-day deadline"},
+    "variables_noted": {"depth": "noted at requested depth"},
 })
 
 STRUCTURED = {
     "name": "Sim Twin",
     "verified_facts": [{"statement": "Owns pricing", "category": "work"}],
-    "skills": ["negotiation"],
+    "skills": ["council-strategist"],
     "constraints": ["No discount over 10%"],
 }
 
@@ -30,31 +30,26 @@ def test_templates_list(api_client):
     resp = api_client.get("/api/scenarios/templates")
     assert resp.status_code == 200
     ids = {t["template_id"] for t in resp.json()}
-    assert ids == {"negotiation", "escalation", "leadership",
-                   "preop-consent", "postop-triage", "difficult-consult"}
+    assert ids == {"council-strategist", "council-skeptic", "council-empath",
+                   "secretary-booking", "secretary-screening"}
     assert all(t["objective"] and t["context"] for t in resp.json())
 
 
-def test_clinical_templates_tagged_and_grounded(api_client):
-    from twinverse.simulation.templates import REGIONS
-
+def test_council_and_secretary_packs(api_client):
     templates = {t["template_id"]: t for t in api_client.get("/api/scenarios/templates").json()}
-    clinical = {tid for tid, t in templates.items() if t["clinical"]}
-    assert clinical == {"preop-consent", "postop-triage", "difficult-consult"}
-    for tid in clinical:
-        t = templates[tid]
-        assert t["anatomy"], f"{tid} must tag anatomical regions"
-        assert all(a["region"] in REGIONS for a in t["anatomy"])
-        assert "TRAINING SIMULATION" in t["context"]
-    for tid in ("negotiation", "escalation", "leadership"):
-        assert templates[tid]["clinical"] is False
+    council = ["council-strategist", "council-skeptic", "council-empath"]
+    assert all(templates[tid]["type"] == "council" for tid in council)
+    objectives = {templates[tid]["objective"] for tid in council}
+    assert len(objectives) == 3, "each lens needs a distinct objective"
+    secretary = ["secretary-booking", "secretary-screening"]
+    assert all(templates[tid]["type"] == "secretary" for tid in secretary)
 
 
 def test_launch_and_poll_single(api_client, stub_model_client):
     stub_model_client(GOOD_SIM)
     tid = _make_twin(api_client)["id"]
     launched = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]})
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]})
     assert launched.status_code == 202, launched.text
     run_id = launched.json()["id"]
     run = api_client.get(f"/api/simulations/{run_id}").json()
@@ -74,7 +69,7 @@ def test_scalar_values_coerced_to_strings(api_client, stub_model_client):
     stub_model_client(json.dumps(data))
     tid = _make_twin(api_client)["id"]
     run_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     out = api_client.get(f"/api/simulations/{run_id}").json()["scenarios"][0]["output"]
     assert out["variables_noted"] == {"budget": "480000", "ok": "true"}
     assert out["assumptions"] == ["plain", "42"]
@@ -84,7 +79,7 @@ def test_launch_validates_input(api_client, stub_model_client):
     stub_model_client(GOOD_SIM)
     tid = _make_twin(api_client)["id"]
     assert api_client.post("/api/simulations", json={
-        "twin_id": "twin_nope", "scenarios": [{"template_id": "negotiation"}]}).status_code == 404
+        "twin_id": "twin_nope", "scenarios": [{"template_id": "council-strategist"}]}).status_code == 404
     bad = api_client.post("/api/simulations", json={
         "twin_id": tid, "scenarios": [{"template_id": "nope"}]})
     assert bad.status_code == 422
@@ -96,7 +91,7 @@ def test_failed_scenario_marks_run_failed(api_client, stub_model_client):
     stub_model_client("bad", "bad")
     tid = _make_twin(api_client)["id"]
     run_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     run = api_client.get(f"/api/simulations/{run_id}").json()
     assert run["status"] == "failed"
     assert run["scenarios"][0]["status"] == "failed"
@@ -107,7 +102,7 @@ def test_partial_rollup(api_client, stub_model_client):
     stub_model_client(GOOD_SIM, "bad", "bad")
     tid = _make_twin(api_client)["id"]
     run_id = api_client.post("/api/simulations", json={"twin_id": tid, "scenarios": [
-        {"template_id": "negotiation"}, {"template_id": "escalation"}]}).json()["id"]
+        {"template_id": "council-strategist"}, {"template_id": "council-skeptic"}]}).json()["id"]
     run = api_client.get(f"/api/simulations/{run_id}").json()
     assert run["status"] == "partial"
     # Parallel execution makes assignment nondeterministic; exactly one of each.
@@ -120,11 +115,11 @@ def test_variable_override_and_snapshot_version(api_client, stub_model_client):
     api_client.patch(f"/api/twins/{tid}", json={"skills": ["v2 skill"]})
     run_id = api_client.post("/api/simulations", json={
         "twin_id": tid, "version": 1,
-        "scenarios": [{"template_id": "negotiation",
-                       "variables": {"time_pressure": "extreme — 4 hours"}}]}).json()["id"]
+        "scenarios": [{"template_id": "council-strategist",
+                       "variables": {"depth": "deep dive — steelman plus pre-mortem"}}]}).json()["id"]
     run = api_client.get(f"/api/simulations/{run_id}").json()
     assert run["identity_version"] == 1
-    assert run["scenarios"][0]["spec"]["variables"]["time_pressure"] == "extreme — 4 hours"
+    assert run["scenarios"][0]["spec"]["variables"]["depth"] == "deep dive — steelman plus pre-mortem"
 
 
 _LIVE = Settings().model_api_key
@@ -136,7 +131,7 @@ def test_live_single_simulation(api_client, monkeypatch):
     monkeypatch.delenv("MODEL_API_KEY", raising=False)
     tid = _make_twin(api_client)["id"]
     run_id = api_client.post("/api/simulations", json={
-        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+        "twin_id": tid, "scenarios": [{"template_id": "council-strategist"}]}).json()["id"]
     deadline = time.time() + 240
     while time.time() < deadline:
         run = api_client.get(f"/api/simulations/{run_id}").json()

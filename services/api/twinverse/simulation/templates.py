@@ -1,133 +1,94 @@
 """Built-in scenario templates. Distinct contexts, same identity."""
 
-from .schemas import AnatomyTag, Counterpart, ScenarioTemplate
-
-# Canonical anatomical region ids. The web 3D viewer mirrors these ids as
-# marker anchors — keep both sides in sync (see apps/web/components/BodyViewer.tsx).
-REGIONS = frozenset({
-    "head", "chest", "abdomen", "shoulder-left", "shoulder-right",
-    "hip", "knee-left", "knee-right",
-})
+from .schemas import Counterpart, ScenarioTemplate
 
 TEMPLATES: dict[str, ScenarioTemplate] = {
-    "negotiation": ScenarioTemplate(
-        template_id="negotiation",
-        type="business_negotiation",
-        title="Enterprise pricing renegotiation",
+    "council-strategist": ScenarioTemplate(
+        template_id="council-strategist",
+        type="council",
+        title="The Strategist",
         context=(
-            "You are renegotiating a $480k annual platform contract. The customer"
-            " claims a competitor offered 30% less and demands matching terms by"
-            " end of week, or they start migration."
-        ),
-        objective="Protect margin while retaining the account; propose a defensible counter-offer.",
-        constraints=["Stay within your discount authority", "Do not disclose other customers' terms"],
-        variables={"time_pressure": "high — 3 days to decide", "budget_leeway": "standard"},
-        counterpart=Counterpart(name="Dana Reyes", role="VP Procurement", attitude="firm, data-driven"),
-    ),
-    "escalation": ScenarioTemplate(
-        template_id="escalation",
-        type="customer_escalation",
-        title="Difficult customer escalation",
-        context=(
-            "A key account's production outage lasted 6 hours. The CTO is on the"
-            " call, angry, citing SLA breach and threatening to churn. Support"
-            " has not yet delivered the full root-cause analysis."
-        ),
-        objective="De-escalate, take ownership, and commit to a credible remediation plan.",
-        constraints=["Do not promise compensation beyond your authority", "Do not speculate on root cause"],
-        variables={"time_pressure": "immediate — live call", "information_access": "partial — RCA pending"},
-        counterpart=Counterpart(name="Priya Nair", role="Customer CTO", attitude="angry, direct"),
-    ),
-    "leadership": ScenarioTemplate(
-        template_id="leadership",
-        type="leadership_crisis",
-        title="Leadership crisis decision",
-        context=(
-            "Two senior engineers resigned this week citing burnout. A critical"
-            " launch is 4 weeks out. The team looks to you for a plan that is"
-            " honest about trade-offs."
-        ),
-        objective="Decide what to cut, keep, or renegotiate, and communicate it credibly.",
-        constraints=["No hiring before the launch", "No mandatory overtime policy"],
-        variables={"time_pressure": "medium — launch in 4 weeks", "team_morale": "low"},
-        counterpart=Counterpart(name="The team", role="8 engineers", attitude="anxious, skeptical"),
-    ),
-    "preop-consent": ScenarioTemplate(
-        template_id="preop-consent",
-        type="clinical_training",
-        title="Pre-operative consent briefing",
-        context=(
-            "TRAINING SIMULATION for clinical education only — not medical advice."
-            " You are the patient, scheduled for a left knee replacement in 5 days."
-            " A medical student must explain the procedure, risks, and recovery and"
-            " confirm you understand before you sign consent."
+            "The decision on the table: should I accept a higher-paying job"
+            " that requires relocating to a new city?"
         ),
         objective=(
-            "Ask the questions a worried patient would ask, voice concerns about"
-            " anesthesia and recovery, and decide whether you feel informed enough"
-            " to consent."
+            "Make the boldest defensible case for action. Optimize for upside,"
+            " speed, and ambition; treat caution as a cost."
         ),
-        constraints=[
-            "Stay in the patient role; do not play the clinician",
-            "Do not invent new conditions beyond your snapshot",
-        ],
-        variables={"anxiety": "high — first surgery", "health_literacy": "moderate"},
-        counterpart=Counterpart(name="Sam", role="medical student", attitude="nervous, thorough"),
-        clinical=True,
-        anatomy=[
-            AnatomyTag(region="knee-left", label="Left knee", note="Scheduled arthroplasty site"),
-        ],
+        constraints=["Ground every claim in the identity snapshot", "End with a clear verdict"],
+        variables={"depth": "quick take — 3 reasons + verdict"},
+        counterpart=Counterpart(name="You", role="decision-maker", attitude="open, wants options"),
     ),
-    "postop-triage": ScenarioTemplate(
-        template_id="postop-triage",
-        type="clinical_training",
-        title="Post-operative triage call",
+    "council-skeptic": ScenarioTemplate(
+        template_id="council-skeptic",
+        type="council",
+        title="The Skeptic",
         context=(
-            "TRAINING SIMULATION for clinical education only — not medical advice."
-            " You are the patient, day 2 after a left knee replacement, calling"
-            " the clinic because the knee looks swollen and you felt warm overnight."
-            " A triage nurse follows protocol to decide urgency."
+            "The decision on the table: should I accept a higher-paying job"
+            " that requires relocating to a new city?"
         ),
         objective=(
-            "Describe your symptoms clearly and in order, answer triage questions"
-            " directly, and convey how worried you are."
+            "Stress-test the idea. Surface risks, hidden costs, and failure"
+            " modes; argue for caution or no-go when the evidence warrants it."
         ),
-        constraints=[
-            "Stay in the patient role; do not diagnose yourself",
-            "Do not invent new conditions beyond your snapshot",
-        ],
-        variables={"pain": "6/10 and rising", "fever": "uncertain — felt warm, no thermometer"},
-        counterpart=Counterpart(name="Nurse Riley", role="triage nurse", attitude="calm, protocol-driven"),
-        clinical=True,
-        anatomy=[
-            AnatomyTag(region="knee-left", label="Left knee", note="Swelling reported at surgical site"),
-        ],
+        constraints=["Ground every claim in the identity snapshot", "End with a clear verdict"],
+        variables={"depth": "quick take — 3 reasons + verdict"},
+        counterpart=Counterpart(name="You", role="decision-maker", attitude="open, wants options"),
     ),
-    "difficult-consult": ScenarioTemplate(
-        template_id="difficult-consult",
-        type="clinical_training",
-        title="Difficult consult: surgery delayed",
+    "council-empath": ScenarioTemplate(
+        template_id="council-empath",
+        type="council",
+        title="The Counselor",
         context=(
-            "TRAINING SIMULATION for clinical education only — not medical advice."
-            " You are the patient. The surgeon must tell you the knee replacement"
-            " is delayed two weeks because your blood pressure is too high for"
-            " anesthesia today."
+            "The decision on the table: should I accept a higher-paying job"
+            " that requires relocating to a new city?"
         ),
         objective=(
-            "React as the patient would, ask what this means for your health and"
-            " the new plan, and say what would rebuild your confidence."
+            "Weigh the human cost — energy, relationships, values. Advise what"
+            " a wise friend who truly knows this person would say."
+        ),
+        constraints=["Ground every claim in the identity snapshot", "End with a clear verdict"],
+        variables={"depth": "quick take — 3 reasons + verdict"},
+        counterpart=Counterpart(name="You", role="decision-maker", attitude="open, wants options"),
+    ),
+    "secretary-booking": ScenarioTemplate(
+        template_id="secretary-booking",
+        type="secretary",
+        title="Appointment booking call",
+        context=(
+            "An incoming call from a client who wants to book time. You are the"
+            " twin answering on the user's behalf."
+        ),
+        objective=(
+            "Book, reschedule, or decline strictly within the twin's scheduling"
+            " constraints, then confirm time, duration, and purpose back."
         ),
         constraints=[
-            "Stay in the patient role; do not play the surgeon",
-            "Do not invent new conditions beyond your snapshot",
+            "Never book outside the stated availability",
+            "Always confirm time, duration, and purpose back",
+            "Never invent calendar events you were not given",
         ],
-        variables={"complication": "elevated blood pressure", "family_present": "daughter on speakerphone"},
-        counterpart=Counterpart(name="Dr. Osei", role="surgeon", attitude="direct, empathetic"),
-        clinical=True,
-        anatomy=[
-            AnatomyTag(region="knee-left", label="Left knee", note="Surgery delayed, joint still painful"),
-            AnatomyTag(region="chest", label="Chest", note="Blood pressure concern for anesthesia"),
+        variables={"request": "book 30 minutes sometime next week"},
+        counterpart=Counterpart(name="Jordan", role="client", attitude="friendly, a bit vague"),
+    ),
+    "secretary-screening": ScenarioTemplate(
+        template_id="secretary-screening",
+        type="secretary",
+        title="Unknown caller screening",
+        context=(
+            "An unknown number is calling during the user's focus hours. You are"
+            " the twin deciding how to handle it."
+        ),
+        objective=(
+            "Decide whether to take a message, offer a slot within availability,"
+            " or decline politely — and explain the call in one line."
+        ),
+        constraints=[
+            "Protect focus hours unless a real emergency is established",
+            "Never share personal details with an unknown caller",
         ],
+        variables={"caller_claim": "says it is urgent, gives no details"},
+        counterpart=Counterpart(name="Unknown", role="caller", attitude="pushy, light on details"),
     ),
 }
 

@@ -20,7 +20,7 @@ Base URL: `http://localhost:8000`. Errors are JSON `{detail}`.
 
 ## Simulations
 
-- `GET /api/scenarios/templates` → the 3 builtin templates (negotiation, escalation, leadership)
+- `GET /api/scenarios/templates` → the 5 builtin templates (3 council lenses + 2 secretary flows)
 - `POST /api/simulations` — body `{twin_id, version?, scenarios: [{template_id, variables?, objective_override?, context_override?}] (1–3)}` → 202 `SimulationRun` shell; executes in background
 - `GET /api/simulations?twin_id=` → `SimulationRun[]` (newest first)
 - `GET /api/simulations/{id}` → full run with per-scenario status/outputs

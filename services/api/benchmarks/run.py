@@ -99,11 +99,11 @@ def main() -> None:
     sims = SimulationStore(args.db)
     evals = EvaluationStore(args.db)
 
-    seed = next(s for s in SEEDS if s.name == "Alex Morgan")
+    seed = next(s for s in SEEDS if s.name == "Maya Chen")
     twin = ids.create_twin(seed.name, seed_payload(seed), seed.profile_type)
     print(f"twin={twin.id} model={settings.meta_model_sim} eval={settings.meta_model_eval}", flush=True)
 
-    specs = [_spec("negotiation"), _spec("escalation"), _spec("leadership")]
+    specs = [_spec("council-strategist"), _spec("council-skeptic"), _spec("council-empath")]
     run = sims.create_run(twin.id, 1, specs)
     t0 = time.monotonic()
     execute_run(run.id, twin, specs, client, sims)
@@ -121,7 +121,7 @@ def main() -> None:
     print(f"comparison wall={eval_wall:.1f}s", flush=True)
 
     t0 = time.monotonic()
-    baseline = run_baseline(twin, _spec("negotiation"), client)
+    baseline = run_baseline(twin, _spec("council-strategist"), client)
     base_wall = time.monotonic() - t0
     base_det = check_scenario(twin, baseline)
     base_eval = evaluate_scenario(twin, baseline, client, settings.meta_model_eval)
@@ -147,7 +147,7 @@ def main() -> None:
             ],
             "summary": comp.summary,
         },
-        "baseline_naive_negotiation": {
+        "baseline_naive_council": {
             "latency_ms": baseline.latency_ms,
             "deterministic": base_det.model_dump(),
             "scores": scores(base_eval),

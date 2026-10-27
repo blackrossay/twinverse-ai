@@ -14,10 +14,10 @@ Built for the Meta AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 ## Status
 
-MVP complete, demo lead is the **Patient Twin** vertical: clinical training
-templates (twin plays the patient), 3D body viewer with scenario-linked
-regions, parallel 3-scenario simulations, evidence-backed comparison,
-rerun-with-diff, AI identity cards. A professional pack ships alongside.
+MVP complete, demo lead is **Twin Council + Twin Secretary**: the twin debates
+your decisions from three parallel lenses and handles calls/calendar within
+your constraints. Evidence-backed comparison, rerun-with-diff, AI identity
+cards, Next.js UI.
 Docs: architecture, API, evaluation (with real benchmark numbers), security,
 demo script, submission pack — all in `docs/`.
 Repo: <https://github.com/blackrossay/twinverse-ai>.

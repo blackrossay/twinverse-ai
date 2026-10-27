@@ -17,106 +17,57 @@ def _prov(*fields: str) -> list[ProvenanceEntry]:
 
 SEEDS: list[TwinCreate] = [
     TwinCreate(
-        name="Alex Morgan",
-        profile_type="professional",
+        name="Maya Chen",
+        profile_type="personal",
         bio=(
-            "Alex Morgan is a senior product manager with 8 years of experience in"
-            " B2B SaaS. Known for direct communication and data-driven decisions."
-            " Currently leading a platform team through a pricing renegotiation."
+            "Maya Chen is a freelance brand designer with 4 years of experience"
+            " and two retainer clients. She is deciding between staying indie"
+            " and accepting a stable in-house job offer. She protects her mornings"
+            " and never takes meetings before 10am."
         ),
         verified_facts=[
-            {"statement": "Senior product manager with 8 years of B2B SaaS experience", "category": "work"},
-            {"statement": "Currently leading a platform team", "category": "work"},
-            {"statement": "Prefers direct communication", "category": "preference"},
+            {"statement": "Freelance brand designer with 4 years of experience", "category": "work"},
+            {"statement": "Has two retainer clients", "category": "work"},
+            {"statement": "Deciding between indie life and an in-house job offer", "category": "other"},
+            {"statement": "Never takes meetings before 10am", "category": "preference"},
         ],
-        skills=["negotiation", "roadmapping", "stakeholder management"],
-        goals=["Close the pricing renegotiation above target margin"],
-        constraints=["No discount beyond 10% without VP approval"],
+        skills=["brand identity", "client communication", "scoping projects"],
+        goals=["Build a sustainable independent practice"],
+        constraints=["No meetings before 10am", "Protects weekends for family"],
         behavioral_hypotheses=[
             {
-                "statement": "Stays calm under time pressure",
+                "statement": "Underprices rush work when a client sounds stressed",
+                "confidence": 0.55,
+                "basis": "Empathetic communicator juggling client relationships",
+            }
+        ],
+        communication_style={"tone": "warm", "verbosity": "moderate"},
+    ),
+    TwinCreate(
+        name="Leo Park",
+        profile_type="personal",
+        bio=(
+            "Leo Park is a junior software engineer, 1.5 years into his first job."
+            " He is on a weekly on-call rotation and studying system design to"
+            " earn a promotion. He guards deep-focus blocks from 9 to 11am."
+        ),
+        verified_facts=[
+            {"statement": "Junior software engineer, 1.5 years of experience", "category": "work"},
+            {"statement": "On a weekly on-call rotation", "category": "work"},
+            {"statement": "Studying system design for promotion", "category": "other"},
+            {"statement": "Guards focus blocks from 9 to 11am", "category": "preference"},
+        ],
+        skills=["debugging", "writing clear pull requests", "incident notes"],
+        goals=["Earn a promotion to mid-level engineer"],
+        constraints=["No non-urgent calls during 9-11am focus blocks"],
+        behavioral_hypotheses=[
+            {
+                "statement": "Says yes to extra on-call swaps to look reliable",
                 "confidence": 0.6,
-                "basis": "Seniority and renegotiation context suggest composure",
+                "basis": "Junior engineer optimizing for promotion signals",
             }
         ],
         communication_style={"tone": "direct", "verbosity": "concise"},
-    ),
-    TwinCreate(
-        name="Jordan Lee",
-        profile_type="professional",
-        bio=(
-            "Jordan Lee is a customer support lead with 5 years in technical support."
-            " Empathetic communicator who de-escalates tense situations."
-        ),
-        verified_facts=[
-            {"statement": "Customer support lead with 5 years of technical support experience", "category": "work"},
-            {"statement": "Communicates empathetically", "category": "preference"},
-        ],
-        skills=["de-escalation", "technical troubleshooting", "coaching"],
-        goals=["Resolve escalations within SLA"],
-        constraints=["Never promise refunds above $500 without manager approval"],
-        behavioral_hypotheses=[
-            {
-                "statement": "Prioritizes customer feelings over strict policy wording",
-                "confidence": 0.55,
-                "basis": "Described as empathetic de-escalator",
-            }
-        ],
-        communication_style={"tone": "empathetic", "verbosity": "moderate"},
-    ),
-    TwinCreate(
-        name="Margaret Alvarez",
-        profile_type="patient",
-        bio=(
-            "Margaret Alvarez is a 68-year-old retired teacher scheduled for a"
-            " left knee replacement in 5 days. She has hypertension controlled"
-            " with medication and a penicillin allergy. This is her first surgery"
-            " and she is anxious about anesthesia."
-        ),
-        verified_facts=[
-            {"statement": "68 years old, retired teacher", "category": "background"},
-            {"statement": "Scheduled for left knee replacement in 5 days", "category": "other"},
-            {"statement": "Hypertension controlled with medication", "category": "other"},
-            {"statement": "Penicillin allergy", "category": "other"},
-            {"statement": "First surgery; anxious about anesthesia", "category": "preference"},
-        ],
-        skills=["describing symptoms in plain language"],
-        goals=["Get through surgery safely and walk without pain"],
-        constraints=["Must mention the penicillin allergy to every new clinician"],
-        behavioral_hypotheses=[
-            {
-                "statement": "Asks many follow-up questions when anxious",
-                "confidence": 0.6,
-                "basis": "First surgery plus stated anxiety about anesthesia",
-            }
-        ],
-        communication_style={"tone": "warm", "verbosity": "detailed"},
-    ),
-    TwinCreate(
-        name="David Okafor",
-        profile_type="patient",
-        bio=(
-            "David Okafor is a 45-year-old bus driver recovering from a left knee"
-            " arthroscopy 2 days ago. He lives alone and is worried about managing"
-            " stairs. He tends to understate pain."
-        ),
-        verified_facts=[
-            {"statement": "45 years old, bus driver", "category": "background"},
-            {"statement": "Day 2 after left knee arthroscopy", "category": "other"},
-            {"statement": "Lives alone; concerned about stairs", "category": "background"},
-            {"statement": "Tends to understate pain", "category": "preference"},
-        ],
-        skills=["following rehab instructions carefully"],
-        goals=["Recover quickly and return to work"],
-        constraints=["Must not drive until cleared by the surgeon"],
-        behavioral_hypotheses=[
-            {
-                "statement": "Minimizes symptoms unless asked directly",
-                "confidence": 0.65,
-                "basis": "Described as understating pain",
-            }
-        ],
-        communication_style={"tone": "reserved", "verbosity": "concise"},
     ),
 ]
 

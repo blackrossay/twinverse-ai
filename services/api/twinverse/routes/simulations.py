@@ -46,8 +46,6 @@ def _resolve(inp: ScenarioInput) -> ScenarioSpec:
         variables=variables,
         counterpart=t.counterpart,
         rubric_id=t.rubric_id,
-        clinical=t.clinical,
-        anatomy=list(t.anatomy),
     )
 
 
@@ -130,8 +128,6 @@ def rerun(
                 variables=variables,
                 counterpart=old.counterpart,
                 rubric_id=old.rubric_id,
-                clinical=old.clinical,
-                anatomy=list(old.anatomy),
             )
         )
     run = sim_store.create_run(twin.id, twin.version, specs, parent_run_id=parent.id)
