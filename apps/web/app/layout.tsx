@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Suspense>
         {children}
         <footer className="mx-auto max-w-5xl px-6 pb-10 pt-6 text-xs text-faint">
-          TWINVERSE AI · simulated perspectives are illustrative starting points — your call, always.
+          TWINVERSE AI · twin perspectives are illustrative starting points — your call, always.
         </footer>
       </body>
     </html>

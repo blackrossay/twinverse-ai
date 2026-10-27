@@ -108,3 +108,20 @@
   third-party video calls with a photoreal avatar, real-time voice dialogue,
   auto-posting to socials. Demoed: the brain at full power; photoreal
   stand-in is the north star only a platform owner can unlock.
+
+## Talking verdicts: open-source local pipeline (2026-10-27, owner-directed)
+
+- Owner asked for the twin's cloned face + voice, then required open-source
+  only (plus Meta products) to avoid license issues. A same-day proprietary
+  API approach (HeyGen/D-ID) was prototyped but never committed — replaced
+  before commit by a fully local pipeline.
+- Voice: MeloTTS base speech (MIT) + OpenVoice V2 tone conversion (MIT).
+  Video: animated portrait via imageio-ffmpeg (MIT) on any machine, or
+  MuseTalk lip-sync (MIT code, weights free incl. commercial) on CUDA GPUs.
+- Deliberately rejected after license research: F5-TTS (CC-BY-NC weights),
+  XTTS (custom CPML), Wav2Lip (no license file upstream), paid cloning APIs.
+- Privacy consequence: likeness (photo + voice) uploads via UI, stays under
+  `data/avatars/likeness/`, self-consent checkbox required, one-click delete.
+  No biometric data ever leaves the machine — stronger story than API dubbing.
+- Honest tiering: CPU boxes get portrait + cloned voice in minutes; true
+  lip-sync is GPU-only and the UI/player always labels which mode rendered.

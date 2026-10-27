@@ -27,6 +27,15 @@ Base URL: `http://localhost:8000`. Errors are JSON `{detail}`.
 - `POST /api/simulations/{id}/rerun` — body `{scenario_ids?, variables?, objective_overrides?, context_overrides?}` → 202 child run
 - `GET /api/simulations/{id}/comparison` → `{deterministic[], evaluations[], summary, model}`; 409 while running; cached after first compute
 
+## Talking verdicts (open-source avatars, local only)
+
+- `GET /api/avatar/status` → `{configured, voice_ready, lipsync_ready, likeness_present, device, missing[], lipsync_note}`
+- `POST /api/avatar/likeness` — multipart `photo` + `voice` + `consent=true` (self-consent required) → `AvatarStatus`; files stay under `data/avatars/likeness/`
+- `DELETE /api/avatar/likeness` → `AvatarStatus` (wipes every likeness byte)
+- `POST /api/simulations/{id}/talking-verdict` → 202 `TalkingVerdict` shell; renders in background (404 unknown run, 409 run active, 503 pipeline/likeness missing)
+- `GET /api/simulations/{id}/talking-verdict` → latest job; poll until `done`/`failed`
+- `GET /api/avatar/video/{job_id}` → MP4 (404 until rendered)
+
 ## Conventions
 
 - 422 = validation error (bad input, unknown template); 404 = twin/run/version/card missing; 502 = model call failed or key missing where a live call is required.

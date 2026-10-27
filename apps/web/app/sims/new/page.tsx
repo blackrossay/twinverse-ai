@@ -46,7 +46,7 @@ export default function NewSimulation() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!twinId || picked.length === 0) {
-      setError("Pick a twin and at least one scenario.");
+      setError("Pick a twin and at least one task.");
       return;
     }
     setBusy(true);
@@ -103,9 +103,9 @@ export default function NewSimulation() {
       <Link href="/" className="text-sm font-bold text-iris-soft hover:text-mist">
         ← Overview
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight">New simulation</h1>
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight">New session</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-dim">
-        One identity snapshot runs through each scenario in isolation. Up to 3 per run.{" "}
+        Your twin takes on up to 3 tasks in parallel — council lenses, calls, or a mix.{" "}
         <Link href="/council" className="font-bold text-iris-soft">
           Or ask the council a question →
         </Link>
@@ -134,12 +134,12 @@ export default function NewSimulation() {
           </select>
         </div>
         <fieldset>
-          <legend className="text-sm font-bold">Scenarios</legend>
+          <legend className="text-sm font-bold">Tasks</legend>
           {groups.map((g) => group(g, templates.filter((t) => t.type === g)))}
         </fieldset>
 
         <PrimaryButton disabled={busy}>
-          {busy ? "Launching…" : `Launch ${picked.length} scenario${picked.length === 1 ? "" : "s"}`}
+          {busy ? "Launching…" : `Launch ${picked.length} task${picked.length === 1 ? "" : "s"}`}
         </PrimaryButton>
       </form>
     </main>

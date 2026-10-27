@@ -1,9 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { listRuns, listTwins, seedTwins, type SimulationRun, type Twin } from "@/lib/api";
+import { listRuns, listTwins, seedTwins, twinImageUrl, type SimulationRun, type Twin } from "@/lib/api";
 import { Badge, Banner, Section, Skeleton } from "@/components/ui";
+
+function TwinAvatar({ id, name }: { id: string; name: string }) {
+  const [shown, setShown] = useState(true);
+  if (!shown) {
+    return (
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-iris/20 text-sm font-extrabold text-iris-soft">
+        {name.slice(0, 1).toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <Image
+      src={twinImageUrl(id)}
+      alt=""
+      width={40}
+      height={40}
+      unoptimized
+      onError={() => setShown(false)}
+      className="h-10 w-10 shrink-0 rounded-full border border-edge object-cover"
+    />
+  );
+}
 
 function statusTone(s: string) {
   if (s === "done") return "green";
@@ -79,7 +102,7 @@ export default function Dashboard() {
           </button>
           <div className="ml-1 flex gap-5 text-sm">
             <span><strong className="text-lg font-extrabold">{twins.length}</strong> <span className="text-dim">twins</span></span>
-            <span><strong className="text-lg font-extrabold">{runs.length}</strong> <span className="text-dim">recent runs</span></span>
+            <span><strong className="text-lg font-extrabold">{runs.length}</strong> <span className="text-dim">sessions</span></span>
           </div>
         </div>
         </div>
@@ -113,17 +136,20 @@ export default function Dashboard() {
                   <li key={t.id}>
                     <Link
                       href={`/twins/${t.id}`}
-                      className="block rounded-xl border border-edge bg-panel px-5 py-4 transition hover:border-iris"
+                      className="flex items-center gap-3.5 rounded-xl border border-edge bg-panel px-5 py-4 transition hover:border-iris"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-bold">{t.name}</span>
-                        <Badge tone="iris">
-                          {t.profile_type} · v{t.current_version}
-                        </Badge>
+                      <TwinAvatar id={t.id} name={t.name} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="truncate font-bold">{t.name}</span>
+                          <Badge tone="iris">
+                            {t.profile_type} · v{t.current_version}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-faint">
+                          updated {new Date(t.updated_at).toLocaleString()}
+                        </p>
                       </div>
-                      <p className="mt-1 text-xs text-faint">
-                        updated {new Date(t.updated_at).toLocaleString()}
-                      </p>
                     </Link>
                   </li>
                 ))}
@@ -131,10 +157,10 @@ export default function Dashboard() {
             )}
           </Section>
 
-          <Section title={`Recent simulations (${runs.length})`}>
+          <Section title={`Recent sessions (${runs.length})`}>
             {runs.length === 0 ? (
               <p className="text-sm text-dim">
-                No simulations yet.{" "}
+                No sessions yet.{" "}
                 <Link href="/sims/new" className="font-bold text-iris-soft">
                   Launch one
                 </Link>
@@ -150,7 +176,7 @@ export default function Dashboard() {
                     >
                       <span className="font-mono text-[13px]">{r.id}</span>
                       <span className="flex items-center gap-3 text-xs text-dim">
-                        {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"} · v
+                        {r.scenarios.length} task{r.scenarios.length === 1 ? "" : "s"} · v
                         {r.identity_version}
                         <Badge tone={statusTone(r.status)}>{r.status}</Badge>
                       </span>

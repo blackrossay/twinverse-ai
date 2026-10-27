@@ -15,10 +15,12 @@ Then put the same twin to work: it handles booking calls and unknown callers
 strictly within your constraints. Change one variable and rerun: the parent
 run is preserved byte-identical while the diff view shows what changed and why.
 
-Built with `muse-spark-1.3` (extraction, simulation, evaluation) and
+Built with `muse-spark-1.3` (extraction, reasoning, evaluation) and
 `muse-image-1.0` (identity cards) via the Meta Model API; FastAPI + SQLite
-backend, Next.js dashboard. All fixtures are labeled; all scores trace to
-evidence; nothing is mocked in the demo path. The north star — a photoreal
+backend, Next.js dashboard. Talking verdicts render locally with an MIT-licensed
+stack (MeloTTS + OpenVoice voice cloning, MuseTalk lip-sync on GPU) — your
+likeness never leaves the machine. All fixtures are labeled; all scores trace
+to evidence; nothing is mocked in the demo path. The north star — a photoreal
 twin answering your video calls — needs platform support only a Meta can
 unlock; this demo proves the brain is ready today.
 

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .meta_client import default_client
+from .routes.avatar import router as avatar_router
 from .routes.comparison import router as comparison_router
 from .routes.simulations import router as simulations_router
 from .routes.twins import twins_router
@@ -19,6 +20,7 @@ app.add_middleware(
 app.include_router(twins_router)
 app.include_router(simulations_router)
 app.include_router(comparison_router)
+app.include_router(avatar_router)
 
 
 @app.get("/api/health")

@@ -217,10 +217,10 @@ function TwinView() {
         </ul>
       </Section>
 
-      <Section title={`Simulations (${runs.length})`}>
+      <Section title={`Sessions (${runs.length})`}>
         {runs.length === 0 ? (
           <p className="text-sm text-dim">
-            No simulations yet.{" "}
+            No sessions yet.{" "}
             <Link href="/sims/new" className="font-bold text-iris-soft">Launch one</Link>.
           </p>
         ) : (
@@ -233,7 +233,7 @@ function TwinView() {
                 >
                   <span className="font-mono text-xs">{r.id}</span>
                   <span className="flex items-center gap-2 text-xs text-dim">
-                    {r.scenarios.length} scenario{r.scenarios.length === 1 ? "" : "s"}
+                    {r.scenarios.length} task{r.scenarios.length === 1 ? "" : "s"}
                     <Badge
                       tone={r.status === "done" ? "green" : r.status === "failed" ? "red" : r.status === "partial" ? "amber" : "slate"}
                     >

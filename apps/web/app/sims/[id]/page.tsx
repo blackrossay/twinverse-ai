@@ -10,6 +10,7 @@ import {
   type Comparison,
   type SimulationRun,
 } from "@/lib/api";
+import TalkingVerdictPanel from "@/components/TalkingVerdict";
 import { Badge, Banner, Meter, Section, Skeleton } from "@/components/ui";
 
 const TERMINAL = ["done", "partial", "failed"];
@@ -101,7 +102,7 @@ function RunView() {
     if (!run) return;
     const included = Object.entries(draft).filter(([, v]) => v.include);
     if (included.length === 0) {
-      setError("Include at least one scenario in the rerun.");
+      setError("Include at least one task in the rerun.");
       return;
     }
     setRerunBusy(true);
@@ -153,14 +154,14 @@ function RunView() {
           <Link href={`/sims/${run.parent_run_id}`} className="font-mono text-iris-soft">
             {run.parent_run_id}
           </Link>{" "}
-          — the parent run is preserved unchanged.
+          — the original session is preserved unchanged.
         </p>
       )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Simulation run</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Session</h1>
           <p className="mt-1.5 font-mono text-xs text-faint">
-            {run.id} · identity v{run.identity_version} · {run.scenarios.length} scenario
+            {run.id} · identity v{run.identity_version} · {run.scenarios.length} task
             {run.scenarios.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -184,7 +185,7 @@ function RunView() {
             {s.status === "running" && (
               <div className="mt-4">
                 <Skeleton lines={3} />
-                <p className="mt-2 text-xs text-faint">Simulating… ~30–90s per scenario on a live model.</p>
+                <p className="mt-2 text-xs text-faint">Working… ~30–90s per task on a live model.</p>
               </div>
             )}
             {s.status === "failed" && (
@@ -238,7 +239,21 @@ function RunView() {
         </div>
       )}
       {comparison && (
-        <Section title="Comparison">
+        <Section
+          title="Comparison"
+          action={
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `My Twin Council verdict:\n${comparison.summary}\n— via TWINVERSE AI`,
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-bold text-mist transition hover:border-dim"
+            >
+              Share verdict on WhatsApp
+            </a>
+          }
+        >
           <p className="text-[15px] leading-relaxed">{comparison.summary}</p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {comparison.evaluations.map((e) => {
@@ -284,6 +299,8 @@ function RunView() {
           </p>
         </Section>
       )}
+
+      {comparison && run.status !== "failed" && <TalkingVerdictPanel runId={run.id} />}
 
       {parent && parentComp && comparison && (
         <Section title={`What changed since ${parent.id}`}>

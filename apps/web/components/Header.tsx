@@ -60,7 +60,7 @@ function HealthBadge() {
 const NAV = [
   { href: "/", label: "Overview" },
   { href: "/council", label: "Council" },
-  { href: "/sims/new", label: "Simulate" },
+  { href: "/sims/new", label: "New session" },
   { href: "/twins/new", label: "New twin" },
 ];
 

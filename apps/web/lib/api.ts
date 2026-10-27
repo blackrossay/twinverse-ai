@@ -167,6 +167,56 @@ export const createImage = (id: string) =>
     method: "POST",
   });
 
+export type AvatarStatus = {
+  configured: boolean;
+  voice_ready: boolean;
+  lipsync_ready: boolean;
+  likeness_present: boolean;
+  device: string;
+  missing: string[];
+  lipsync_note: string;
+};
+
+export type TalkingVerdict = {
+  id: string;
+  run_id: string;
+  provider: string;
+  provider_job_id: string;
+  status: "queued" | "rendering" | "done" | "failed";
+  render_mode: "portrait" | "lipsync";
+  script: string;
+  video_url: string;
+  error: string;
+};
+
+export const getAvatarStatus = () => api<AvatarStatus>("/api/avatar/status");
+export const requestTalkingVerdict = (id: string) =>
+  api<TalkingVerdict>(`/api/simulations/${id}/talking-verdict`, { method: "POST" });
+export const getTalkingVerdict = (id: string) =>
+  api<TalkingVerdict>(`/api/simulations/${id}/talking-verdict`);
+export const deleteLikeness = () =>
+  api<AvatarStatus>("/api/avatar/likeness", { method: "DELETE" });
+
+export async function uploadLikeness(photo: File, voice: File): Promise<AvatarStatus> {
+  const form = new FormData();
+  form.append("photo", photo);
+  form.append("voice", voice);
+  form.append("consent", "true");
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/api/avatar/likeness`, { method: "POST", body: form });
+  } catch {
+    throw new ApiError(0, `API unreachable at ${BASE} — is the backend running?`);
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail =
+      typeof body?.detail === "string" ? body.detail : `Request failed (${res.status})`;
+    throw new ApiError(res.status, detail);
+  }
+  return body as AvatarStatus;
+}
+
 export const rerunRun = (
   id: string,
   body: {

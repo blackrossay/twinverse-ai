@@ -21,7 +21,7 @@
 
 ## Limitations (read before judging or reusing)
 
-- Simulated behavior explores **possibilities under stated assumptions** — never
+- Twin perspectives explore **possibilities under stated assumptions** — never
   a prediction of what a real person would do. The UI and prompts say so.
 - The evaluator shares the generator's model family; treat scores as estimates
   with evidence, not ground truth.

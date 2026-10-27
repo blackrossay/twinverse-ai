@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     twinverse_card_dir: str = "data/cards"
     meta_model_image: str = "muse-image-1.0"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # Talking-verdict avatars: fully local open-source pipeline (MeloTTS +
+    # OpenVoice voice cloning, MuseTalk lip-sync on CUDA GPUs). The user's
+    # photo + voice sample stay on this machine under twinverse_avatar_dir.
+    twinverse_avatar_dir: str = "data/avatars"
+    twinverse_openvoice_ckpt: str = "models/openvoice_v2"
+    twinverse_musetalk_repo: str = ""
 
     @property
     def fixtures_enabled(self) -> bool:

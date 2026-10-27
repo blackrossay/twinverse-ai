@@ -4,7 +4,7 @@ One identity. Multiple realities. Measurable outcomes.
 
 TWINVERSE AI is a reusable multimodal digital-twin platform. Its **Parallel Reality
 Engine** takes one structured, versioned identity snapshot and runs it through
-multiple isolated AI simulations in parallel, then compares outcomes with
+multiple parallel perspectives at once, then compares outcomes with
 evidence-backed scores.
 
 Built for the Meta AI Developer Hackathon (Oct 26 – Nov 4, 2026).
@@ -17,7 +17,9 @@ Built for the Meta AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 MVP complete, demo lead is **Twin Council + Twin Secretary**: the twin debates
 your decisions from three parallel lenses and handles calls/calendar within
 your constraints. Evidence-backed comparison, rerun-with-diff, AI identity
-cards, Next.js UI.
+cards, Next.js UI — plus **talking verdicts**: your twin speaks results in
+your cloned face and voice via a fully local open-source pipeline
+(docs/AVATAR.md).
 Docs: architecture, API, evaluation (with real benchmark numbers), security,
 demo script, submission pack — all in `docs/`.
 Repo: <https://github.com/blackrossay/twinverse-ai>.
@@ -113,5 +115,5 @@ Live-model tests run only when a key is configured; otherwise they skip
 - All model calls are server-side; browsers never see `MODEL_API_KEY`.
 - Verified facts and model-inferred hypotheses are stored and displayed separately.
 - Fixture (offline) output is always labeled and never presented as live model output.
-- Simulated behavior is explored possibilities under stated assumptions, never a
+- Twin perspectives explore possibilities under stated assumptions, never a
   prediction of what a real person would do.
