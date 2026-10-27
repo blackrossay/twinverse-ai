@@ -19,6 +19,7 @@ import {
   type Twin,
 } from "@/lib/api";
 import { BackLink, Banner, GhostButton, Skeleton, Waveform } from "@/components/ui";
+import { PersonaSwitcher, TranscriptCaption, VoiceOrb, personaTheme } from "@/components/voice";
 
 type VoiceMode = "instant" | "clone" | "silent";
 
@@ -146,9 +147,9 @@ function TalkView() {
     return created;
   }
 
-  async function send(e?: React.FormEvent) {
+  async function send(e?: React.FormEvent, override?: string) {
     e?.preventDefault();
-    const message = draft.trim();
+    const message = (override ?? draft).trim();
     if (!message || !twinId || busy) return;
     setBusy(true);
     setError("");
@@ -281,6 +282,42 @@ function TalkView() {
           <Banner tone="red">{error}</Banner>
         </div>
       )}
+
+
+      {/* Voice-first hero: orb is the primary input (VOICE.md) */}
+      <div className="mt-8 flex flex-col items-center">
+        <VoiceOrb
+          state={busy ? "thinking" : speaking ? "speaking" : "idle"}
+          gradient={personaTheme(twinId || "twin").gradient}
+          onTranscript={(text) => setDraft(text)}
+          onFinal={(text) => void send(undefined, text)}
+          onUnsupported={() => setError("Mic's off in this browser — type instead, or tap a suggestion below.")}
+        />
+        <p className="mt-3 text-center text-sm text-zinc-400" role="status">
+          {busy ? `${twin?.name ?? "Your twin"} is thinking…` : speaking ? "Speaking…" : "Tap the orb and tell your twin what you need — typing works too."}
+        </p>
+        <div className="mt-4 w-full">
+          <TranscriptCaption
+            label={session?.turns.at(-1)?.role === "twin" ? `${twin?.name ?? "Twin"} said` : undefined}
+            text={[...(session?.turns ?? [])].reverse().find((x) => x.role === "twin")?.text ?? ""}
+          />
+        </div>
+        <div className="mt-5">
+          <PersonaSwitcher personas={twins} activeId={twinId} onSwitch={setTwinId} />
+        </div>
+        <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Suggested prompts">
+          {[
+            "What should I protect this week?",
+            "Give me the boldest case for my next move",
+            "What would you say to a client pushing my boundaries?",
+          ].map((q) => (
+            <button key={q} onClick={() => void send(undefined, q)} disabled={busy || !twinId}
+              className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/5 px-4 text-xs font-medium text-zinc-300 transition hover:border-white/30 hover:text-white disabled:opacity-50">
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <label className="min-w-48 flex-1 text-sm font-semibold text-white">

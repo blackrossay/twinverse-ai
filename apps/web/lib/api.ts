@@ -397,6 +397,9 @@ export const setInferenceSettings = (body: {
 export const likenessPhotoSrc = (cacheBuster = 0) =>
   `${apiBase()}/api/avatar/likeness/photo?cb=${cacheBuster}`;
 
+export const resetDemo = () =>
+  api<TwinDetail[]>("/api/demo/reset", { method: "POST" });
+
 export const rerunRun = (
   id: string,
   body: {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   addAgendaPoint,
@@ -78,6 +79,9 @@ export default function LivePage() {
 }
 
 function LiveView() {
+  const params = useSearchParams();
+  const demoMode = params.get("demo") === "1";
+  const autoStarted = useRef(false);
   const [twins, setTwins] = useState<Twin[]>([]);
   const [twinId, setTwinId] = useState("");
   const [past, setPast] = useState<LiveSession[]>([]);
@@ -119,6 +123,24 @@ function LiveView() {
     if (!twinId) return;
     listLiveSessions(twinId).then(setPast).catch(() => {});
   }, [twinId, session?.status]);
+
+  // /live?demo=1 — one tap from the homepage lands on a running demo
+  // stream (auto-created, simulated chat on) for the 1:30 wow window.
+  useEffect(() => {
+    if (!demoMode || !twinId || session || autoStarted.current) return;
+    autoStarted.current = true;
+    createLiveSession(twinId, {
+      title: "Live with your twin — demo",
+      mode: "socials",
+      platforms: ["youtube", "twitch", "x"],
+      agenda: ["Welcome and wins of the week", "The big topic, broken down", "Live Q&A with chat"],
+    })
+      .then((created) => {
+        setSession(created);
+        setSimulate(true);
+      })
+      .catch(() => setError("Demo stream could not start — set it up manually below."));
+  }, [demoMode, twinId, session]);
 
   useEffect(() => {
     if (!session || session.status !== "live") return;

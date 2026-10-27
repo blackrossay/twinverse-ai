@@ -3,6 +3,7 @@ import { Instrument_Serif, Space_Grotesk, JetBrains_Mono } from "next/font/googl
 import { Suspense } from "react";
 import Header from "@/components/Header";
 import MobileNav from "@/components/MobileNav";
+import DemoReset from "@/components/DemoReset";
 import "./globals.css";
 
 const instrument = Instrument_Serif({
@@ -51,8 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Suspense>
         {children}
         <MobileNav />
-        <footer className="mx-auto max-w-6xl px-6 pb-24 pt-6 text-xs text-zinc-400 md:pb-10">
-          TWINVERSE AI · twin perspectives are illustrative starting points — your call, always.
+        <footer className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 pb-24 pt-6 text-xs text-zinc-400 md:pb-10">
+          <span>TWINVERSE AI · twin perspectives are illustrative starting points — your call, always.</span>
+          <DemoReset />
         </footer>
       </body>
     </html>

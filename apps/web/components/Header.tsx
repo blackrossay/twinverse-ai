@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { getHealth, type Health } from "@/lib/api";
+import { getHealth, resetDemo, type Health } from "@/lib/api";
 import { anime, springs } from "@/lib/motion";
 
 function Mark() {
@@ -80,6 +80,7 @@ const NAV = [
 
 export default function Header() {
   const path = usePathname();
+  const router = useRouter();
   const indicatorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -177,7 +178,29 @@ export default function Header() {
         }`}
       >
         <div className="mx-auto flex max-w-6xl items-center gap-8 px-6 py-3.5">
-          <Link href="/" className="group flex items-center gap-3 magnetic">
+          <Link
+            href="/"
+            className="group flex items-center gap-3 magnetic"
+            onClick={(e) => {
+              // Hidden demo shortcut: triple-tap the logo resets demo data.
+              const now = Date.now();
+              const taps = (window as unknown as { __logoTaps?: number[] }).__logoTaps ?? [];
+              const recent = [...taps.filter((t) => now - t < 1200), now];
+              (window as unknown as { __logoTaps?: number[] }).__logoTaps = recent;
+              if (recent.length >= 3) {
+                e.preventDefault();
+                (window as unknown as { __logoTaps?: number[] }).__logoTaps = [];
+                if (window.confirm("Reset demo data and reseed personas?")) {
+                  resetDemo()
+                    .then(() => {
+                      router.push("/");
+                      router.refresh();
+                    })
+                    .catch(() => {});
+                }
+              }
+            }}
+          >
             <div className="relative">
               <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-accent/20 to-lime/20 blur-[6px] opacity-0 transition group-hover:opacity-100" />
               <Mark />

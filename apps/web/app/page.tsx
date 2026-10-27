@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { listRuns, listTwins, seedTwins, twinImageUrl, type SimulationRun, type Twin } from "@/lib/api";
 import { Badge, Banner, Skeleton, statusTone, Waveform } from "@/components/ui";
 import { anime as animeMotion, animationScope, springs } from "@/lib/motion";
+import HowItWorks from "@/components/HowItWorks";
 
 function TwinAvatar({ id, name }: { id: string; name: string }) {
   const [shown, setShown] = useState(true);
@@ -54,7 +55,14 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([listTwins(), listRuns()])
-      .then(([t, r]) => {
+      .then(async ([t, r]) => {
+        if (cancelled) return;
+        // First launch must never be an empty screen for judges: seed the
+        // demo personas once (per browser) so the demo starts at the hero.
+        if (t.length === 0 && !sessionStorage.getItem("twinverse-seeded")) {
+          sessionStorage.setItem("twinverse-seeded", "1");
+          t = await seedTwins().catch(() => t);
+        }
         if (cancelled) return;
         setTwins(t);
         setRuns(r.slice(0, 8));
@@ -194,6 +202,8 @@ export default function Dashboard() {
             <span className="hidden mono rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black md:inline-flex">New · Live Studio</span>
           </div>
 
+          {/* Locked hero copy (owner-approved, do not paraphrase):
+              "Ask once. Hear every side of yourself." */}
           <h1 id="heroTitle" className="display mx-auto mt-6 max-w-4xl text-center text-[clamp(2.6rem,7vw,5.6rem)] leading-[0.88] text-white">
             <span className="block overflow-hidden">
               <span className="inline-block">
@@ -256,6 +266,8 @@ export default function Dashboard() {
       </div>
 
       {/* DASHBOARD */}
+      <HowItWorks />
+
       <div ref={bentoRef} className="mt-2 grid grid-cols-12 gap-4">
         <div className="bento bento-accent col-span-12 md:col-span-7 p-6 md:p-7">
           <div className="flex items-start justify-between gap-4">
@@ -440,7 +452,7 @@ export default function Dashboard() {
               <h3 className="display mt-3 max-w-[20ch] text-[30px] leading-[0.95]">Every side, scored.<br /><span className="italic text-zinc-400">Your call, always.</span></h3>
               <p className="mt-3 max-w-[40ch] text-[13px] leading-relaxed text-zinc-400">Seed personas, launch a council debate, then port the winner to your calendar and calls.</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/council" className="rounded-full bg-white px-6 py-2.5 text-[13px] font-semibold text-black transition hover:bg-zinc-200">Open council →</Link>
+                <Link href="/council" className="inline-flex min-h-11 items-center rounded-full border border-white/15 px-6 text-[13px] font-semibold text-white transition hover:border-white/40">Open council →</Link>
                 <Link href="/talk" className="rounded-full border border-white/15 px-6 py-2.5 text-[13px] font-semibold text-white transition hover:border-white/30">Talk mode</Link>
               </div>
             </div>
