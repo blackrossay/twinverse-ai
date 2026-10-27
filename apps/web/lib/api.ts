@@ -418,7 +418,22 @@ export const rerunRun = (
 
 export type VoiceCatalogue = {
   cloned: { ready: boolean; engine_ready: boolean; likeness_present: boolean; label: string };
+  studio: { ready: boolean; voices: { id: string; name: string }[]; label: string };
   elevenlabs: { configured: boolean; voices: { id: string; name: string; category: string }[]; label: string };
   instant: { ready: boolean; label: string };
 };
 export const getVoiceCatalogue = () => api<VoiceCatalogue>("/api/voice/catalogue");
+
+export async function speakStudio(text: string, voice = "af_heart"): Promise<Blob> {
+  const token = getToken();
+  const res = await fetch(`${apiBase()}/api/voice/studio`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ text, voice }),
+  });
+  if (!res.ok) throw new ApiError(res.status, "Studio voice unavailable");
+  return res.blob();
+}

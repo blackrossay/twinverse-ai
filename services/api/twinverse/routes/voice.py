@@ -23,6 +23,12 @@ class SpeakIn(BaseModel):
     voice_id: str = Field(min_length=1, max_length=100)
 
 
+class StudioIn(BaseModel):
+    text: str = Field(min_length=1, max_length=1200)
+    voice: str = Field(default="af_heart", max_length=50)
+    speed: float = Field(default=1.0, ge=0.5, le=2.0)
+
+
 def _elevenlabs_voices(api_key: str) -> list[dict]:
     now = time.monotonic()
     if now - float(_EL_CACHE["at"]) < _EL_TTL_S and _EL_CACHE["voices"]:
@@ -54,12 +60,19 @@ def catalogue() -> dict:
     settings = get_settings()
     likeness = likeness_paths(settings.twinverse_avatar_dir).present
     el_configured = bool(settings.elevenlabs_api_key)
+    from ..avatar.kokoro_tts import kokoro_available, list_voices
+
     return {
         "cloned": {
             "ready": inference_ready(settings) and likeness,
             "engine_ready": inference_ready(settings),
             "likeness_present": likeness,
             "label": "Your cloned voice (local/cloud, open-source)",
+        },
+        "studio": {
+            "ready": kokoro_available(settings),
+            "voices": list_voices(settings),
+            "label": "Studio voices (Kokoro, open-source, local)",
         },
         "elevenlabs": {
             "configured": el_configured,
@@ -71,6 +84,30 @@ def catalogue() -> dict:
             "label": "Instant device voices (browser, zero setup)",
         },
     }
+
+
+@router.post("/studio")
+def studio(body: StudioIn) -> Response:
+    """Kokoro studio voice: natural catalogue speech, generated locally."""
+    import tempfile
+    from pathlib import Path
+
+    from ..avatar.kokoro_tts import kokoro_available, synthesize
+    from ..avatar.pipeline import PipelineError
+
+    settings = get_settings()
+    if not kokoro_available(settings):
+        raise HTTPException(
+            status_code=503,
+            detail="Kokoro studio voices not installed on this server (avatar venv + models/kokoro)",
+        )
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "studio.wav"
+        try:
+            synthesize(body.text, body.voice, out, settings, speed=body.speed)
+        except PipelineError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from None
+        return Response(content=out.read_bytes(), media_type="audio/wav")
 
 
 @router.post("/speak")

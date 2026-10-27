@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # OpenVoice voice cloning, MuseTalk lip-sync on CUDA GPUs). The user's
     # photo + voice sample stay on this machine under twinverse_avatar_dir.
     twinverse_avatar_dir: str = "data/avatars"
+    twinverse_kokoro_dir: str = "models/kokoro"
     twinverse_openvoice_ckpt: str = "models/openvoice_v2"
     twinverse_musetalk_repo: str = ""
     # Inference placement: "local" renders on this machine (dev/demo);

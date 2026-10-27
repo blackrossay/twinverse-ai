@@ -8,6 +8,7 @@ import {
   getAvatarStatus,
   getInferenceSettings,
   getVoiceCatalogue,
+  speakStudio,
   type VoiceCatalogue,
   likenessPhotoSrc,
   setInferenceSettings,
@@ -434,6 +435,29 @@ export default function ClonePage() {
               </button>
             </div>
           ))}
+
+          {catalogue?.studio.ready && catalogue.studio.voices.slice(0, 8).map((v) => (
+            <div key={v.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-violet-400/25 bg-violet-400/5 px-4 py-2.5">
+              <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">{v.name}</span>
+              <span className="text-xs text-zinc-400">Kokoro · studio</span>
+              <button
+                onClick={async () => {
+                  try {
+                    const blob = await speakStudio("Hi, I'm a studio voice — natural, local, and open source. Your clone will sound like you.", v.id);
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.onended = () => URL.revokeObjectURL(url);
+                    await audio.play();
+                  } catch {
+                    setError("Studio voice preview failed — is the backend running the avatar venv?");
+                  }
+                }}
+                className="inline-flex min-h-11 items-center rounded-full border border-white/15 px-4 text-xs font-semibold text-white transition hover:border-white/40">
+                Preview
+              </button>
+            </div>
+          ))}
+
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
             <span className="text-sm font-semibold text-white">Hosted catalogue (ElevenLabs-style)</span>
             <span className="text-xs text-zinc-300">

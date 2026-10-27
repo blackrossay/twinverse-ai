@@ -13,6 +13,7 @@ import {
   listTwins,
   postTurn,
   requestTurnVideo,
+  speakStudio,
   requestTurnVoice,
   type AvatarStatus,
   type Conversation,
@@ -21,7 +22,7 @@ import {
 import { BackLink, Banner, GhostButton, Skeleton, Waveform } from "@/components/ui";
 import { PersonaSwitcher, TranscriptCaption, VoiceOrb, personaTheme } from "@/components/voice";
 
-type VoiceMode = "instant" | "clone" | "silent";
+type VoiceMode = "instant" | "studio" | "clone" | "silent";
 type VoiceStyle = "natural" | "warm" | "energetic";
 const VOICE_STYLES: Record<VoiceStyle, { rate: number; pitch: number; label: string }> = {
   natural: { rate: 1, pitch: 1, label: "Natural" },
@@ -212,6 +213,24 @@ function TalkView() {
       setSession(fresh);
       void refreshSessions(twinId);
       if (voiceMode === "instant") speakInstant(reply.text);
+      if (voiceMode === "studio") {
+        setSpeaking(true);
+        speakStudio(reply.text)
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.onended = () => {
+              setSpeaking(false);
+              URL.revokeObjectURL(url);
+            };
+            audio.onerror = () => setSpeaking(false);
+            return audio.play();
+          })
+          .catch(() => {
+            setSpeaking(false);
+            speakInstant(reply.text);
+          });
+      }
       if (voiceMode === "clone" && avatar?.configured) {
         try {
           await requestTurnVoice(reply.id);
@@ -381,6 +400,7 @@ function TalkView() {
             className="mt-1.5 block rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 min-h-11 text-sm font-medium text-white outline-none focus:border-white/40 [&>option]:bg-zinc-900"
           >
             <option value="instant">Instant (browser)</option>
+            <option value="studio">Studio (Kokoro)</option>
             <option value="clone">My cloned voice</option>
             <option value="silent">Silent</option>
           </select>

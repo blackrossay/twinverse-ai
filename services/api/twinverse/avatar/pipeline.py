@@ -147,9 +147,16 @@ def clone_voice(script_text: str, ref_audio: Path, out_wav: Path, settings: Sett
         _to_wav(ref_audio, ref_wav)
 
         base_wav = workdir / "base.wav"
-        tts = TTS(language="EN", device=device)
-        speaker_ids = tts.hps.data.spk2id
-        tts.tts_to_file(script_text, speaker_ids["EN-US"], str(base_wav), speed=1.0)
+        # Base speech: Kokoro (natural, catalogue-grade) when available,
+        # else MeloTTS. The tone converter then makes it the user's voice.
+        from .kokoro_tts import kokoro_available, synthesize as kokoro_speak
+
+        if kokoro_available(settings):
+            kokoro_speak(script_text, "af_heart", base_wav, settings)
+        else:
+            tts = TTS(language="EN", device=device)
+            speaker_ids = tts.hps.data.spk2id
+            tts.tts_to_file(script_text, speaker_ids["EN-US"], str(base_wav), speed=1.0)
 
         converter = ToneColorConverter(str(ckpt / "converter" / "config.json"), device=device)
         converter.load_ckpt(str(ckpt / "converter" / "checkpoint.pth"))
@@ -160,9 +167,12 @@ def clone_voice(script_text: str, ref_audio: Path, out_wav: Path, settings: Sett
         except Exception:
             pass
         target_se, _ = se_extractor.get_se(str(ref_wav), converter, vad=True)
-        source_se = torch.load(
-            str(ckpt / "base_speakers" / "ses" / "en-newest.pth"), map_location=device
-        )
+        try:
+            source_se, _ = se_extractor.get_se(str(base_wav), converter, vad=False)
+        except Exception:
+            source_se = torch.load(
+                str(ckpt / "base_speakers" / "ses" / "en-newest.pth"), map_location=device
+            )
         converter.convert(
             audio_src_path=str(base_wav),
             src_se=source_se,
