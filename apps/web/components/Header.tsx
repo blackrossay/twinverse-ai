@@ -7,9 +7,11 @@ import { getHealth, type Health } from "@/lib/api";
 
 function Mark() {
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden>
-      <circle cx="9" cy="13" r="7" fill="none" stroke="#7c5cff" strokeWidth="2.4" />
-      <circle cx="17" cy="13" r="7" fill="none" stroke="#a48fff" strokeWidth="2.4" opacity="0.65" />
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
+      <rect x="1" y="7" width="3" height="8" rx="1.5" fill="#fafafa" />
+      <rect x="6" y="3" width="3" height="16" rx="1.5" fill="#fafafa" opacity="0.9" />
+      <rect x="11" y="6" width="3" height="10" rx="1.5" fill="#fafafa" opacity="0.7" />
+      <rect x="16" y="8" width="3" height="6" rx="1.5" fill="#fafafa" opacity="0.5" />
     </svg>
   );
 }
@@ -39,17 +41,17 @@ function HealthBadge() {
 
   if (offline)
     return (
-      <span className="rounded-full bg-red-950 px-3 py-1 text-xs font-semibold text-red-300">
+      <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300 ring-1 ring-red-500/20">
         api offline
       </span>
     );
   if (!health) return null;
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
         health.model_mode === "live"
-          ? "bg-emerald-950 text-emerald-300"
-          : "bg-amber-950 text-amber-300"
+          ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/20"
+          : "bg-amber-500/10 text-amber-300 ring-amber-500/20"
       }`}
     >
       {health.model_mode === "live" ? `live · ${health.model}` : "fixture mode"}
@@ -67,12 +69,12 @@ const NAV = [
 export default function Header() {
   const path = usePathname();
   return (
-    <header className="sticky top-0 z-20 border-b border-edge bg-abyss/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-3">
         <Link href="/" className="flex items-center gap-2.5">
           <Mark />
-          <span className="text-[15px] font-extrabold tracking-tight">
-            TWINVERSE <span className="text-iris-soft">AI</span>
+          <span className="text-[15px] font-bold tracking-tight text-white">
+            TWINVERSE&nbsp;AI
           </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
@@ -80,8 +82,8 @@ export default function Header() {
             <Link
               key={n.href}
               href={n.href}
-              className={`rounded-lg px-3 py-1.5 font-semibold ${
-                path === n.href ? "bg-panel2 text-mist" : "text-dim hover:text-mist"
+              className={`rounded-full px-3.5 py-1.5 font-medium transition ${
+                path === n.href ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               {n.label}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { launchRun, listTwins, type Twin } from "@/lib/api";
-import { Banner, PrimaryButton } from "@/components/ui";
+import { Banner, PrimaryButton, Waveform } from "@/components/ui";
 
 const LENSES = ["council-strategist", "council-skeptic", "council-empath"];
 
@@ -13,6 +13,9 @@ const SAMPLES = [
   "Should I take on a big client that pays well but has a chaotic process?",
   "Should I say yes to extra on-call shifts to get promoted faster?",
 ];
+
+const inputCls =
+  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none transition placeholder:text-zinc-600 focus:border-white/40";
 
 export default function Council() {
   const router = useRouter();
@@ -58,16 +61,17 @@ export default function Council() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/" className="text-sm font-bold text-iris-soft hover:text-mist">
+    <main className="mx-auto max-w-2xl px-6 py-12">
+      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
         ← Overview
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight">Twin Council</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-dim">
-        Ask one question. Three lenses of your twin — the <strong>Strategist</strong>, the{" "}
-        <strong>Skeptic</strong>, and the <strong>Counselor</strong> — answer in parallel,
-        then the comparison synthesizes a verdict.
+      <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">Twin Council</h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
+        Ask one question. Three lenses of your twin — the <strong className="text-zinc-200">Strategist</strong>, the{" "}
+        <strong className="text-zinc-200">Skeptic</strong>, and the <strong className="text-zinc-200">Counselor</strong> — answer in
+        parallel, then the comparison synthesizes a verdict.
       </p>
+      <Waveform bars={36} animated={false} className="mt-5 text-white/20" />
 
       {error && (
         <div className="mt-4">
@@ -77,12 +81,12 @@ export default function Council() {
 
       <form onSubmit={submit} className="mt-6 space-y-5">
         <div>
-          <label htmlFor="twin" className="text-sm font-bold">Twin</label>
+          <label htmlFor="twin" className="text-sm font-semibold text-white">Twin</label>
           <select
             id="twin"
             value={twinId}
             onChange={(e) => setTwinId(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm font-semibold"
+            className={`${inputCls} [&>option]:bg-zinc-900`}
           >
             {twins.map((t) => (
               <option key={t.id} value={t.id}>
@@ -92,7 +96,7 @@ export default function Council() {
           </select>
         </div>
         <div>
-          <label htmlFor="question" className="text-sm font-bold">Your question</label>
+          <label htmlFor="question" className="text-sm font-semibold text-white">Your question</label>
           <textarea
             id="question"
             value={question}
@@ -100,7 +104,7 @@ export default function Council() {
             required
             rows={3}
             placeholder="e.g. Should I quit my stable job to go freelance full-time?"
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm outline-none transition placeholder:text-faint focus:border-iris"
+            className={inputCls}
           />
           <div className="mt-2 flex flex-wrap gap-2">
             {SAMPLES.map((s) => (
@@ -108,7 +112,7 @@ export default function Council() {
                 key={s}
                 type="button"
                 onClick={() => setQuestion(s)}
-                className="rounded-full bg-panel2 px-3 py-1 text-xs font-semibold text-dim transition hover:text-mist"
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-400 transition hover:border-white/30 hover:text-white"
               >
                 {s.length > 48 ? s.slice(0, 48) + "…" : s}
               </button>
@@ -116,12 +120,12 @@ export default function Council() {
           </div>
         </div>
         <div>
-          <label htmlFor="depth" className="text-sm font-bold">Depth</label>
+          <label htmlFor="depth" className="text-sm font-semibold text-white">Depth</label>
           <select
             id="depth"
             value={depth}
             onChange={(e) => setDepth(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm font-semibold"
+            className={`${inputCls} [&>option]:bg-zinc-900`}
           >
             <option value="quick take — 3 reasons + verdict">Quick take — 3 reasons + verdict</option>
             <option value="deep dive — steelman the case, then pre-mortem it">Deep dive — steelman + pre-mortem</option>

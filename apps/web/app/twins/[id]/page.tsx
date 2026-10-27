@@ -115,7 +115,7 @@ function TwinView() {
           </select>
           <button
             onClick={remove}
-            className="rounded-lg border border-red-900 px-3 py-1.5 text-sm font-bold text-red-300 transition hover:bg-red-950"
+            className="rounded-full border border-red-500/30 px-3.5 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
           >
             Delete
           </button>
@@ -128,7 +128,7 @@ function TwinView() {
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-5 rounded-xl border border-edge bg-panel p-5">
+      <div className="mt-6 flex items-start gap-5 rounded-2xl border border-white/10 bg-[#0c0c0c] p-5">
         {imgShown && (
           <Image
             src={twinImageUrl(twin.id, imgCb)}
@@ -145,7 +145,7 @@ function TwinView() {
           <button
             onClick={generateCard}
             disabled={imgBusy}
-            className="mt-3 rounded-lg border border-edge px-3 py-1.5 text-xs font-bold text-mist transition hover:border-dim disabled:opacity-50"
+            className="mt-3 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white disabled:opacity-50"
           >
             {imgBusy ? "Generating…" : imgShown ? "Regenerate identity card" : "Generate identity card"}
           </button>
@@ -155,7 +155,7 @@ function TwinView() {
       <Section title={`Verified facts (${p.verified_facts.length})`}>
         <ul className="space-y-2">
           {p.verified_facts.map((f) => (
-            <li key={f.id} className="rounded-xl border border-edge bg-panel px-4 py-3 text-sm">
+            <li key={f.id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-3 text-sm text-zinc-200">
               {f.statement}
               <span className="ml-2 text-xs text-faint">· {f.category}</span>
             </li>
@@ -180,7 +180,7 @@ function TwinView() {
       <Section title={`Behavioral hypotheses — inferred, not verified (${p.behavioral_hypotheses.length})`}>
         <ul className="space-y-2">
           {p.behavioral_hypotheses.map((h) => (
-            <li key={h.id} className="rounded-xl border border-dashed border-edge bg-panel px-4 py-3 text-sm">
+            <li key={h.id} className="rounded-2xl border border-dashed border-white/15 bg-[#0c0c0c] px-4 py-3 text-sm text-zinc-200">
               <div className="flex items-center justify-between gap-3">
                 <span>{h.statement}</span>
                 <span className="shrink-0 font-mono text-xs font-bold text-iris-soft">
@@ -197,7 +197,7 @@ function TwinView() {
         <Section title="Communication style">
           <dl className="grid grid-cols-2 gap-2 text-sm">
             {Object.entries(p.communication_style).map(([k, v]) => (
-              <div key={k} className="rounded-xl border border-edge bg-panel px-4 py-2.5">
+              <div key={k} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-2.5">
                 <dt className="text-xs text-faint">{k}</dt>
                 <dd className="font-semibold">{v}</dd>
               </div>
@@ -229,7 +229,7 @@ function TwinView() {
               <li key={r.id}>
                 <Link
                   href={`/sims/${r.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-edge bg-panel px-4 py-2.5 text-sm transition hover:border-iris"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-2.5 text-sm transition hover:border-white/30"
                 >
                   <span className="font-mono text-xs">{r.id}</span>
                   <span className="flex items-center gap-2 text-xs text-dim">

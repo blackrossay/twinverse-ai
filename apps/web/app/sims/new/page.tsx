@@ -70,27 +70,29 @@ export default function NewSimulation() {
     return (
       <div className="mt-4">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold">{GROUP_LABELS[type] ?? type}</h3>
-          <div className="h-px flex-1 bg-edge" />
+          <h3 className="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
+            {GROUP_LABELS[type] ?? type}
+          </h3>
+          <div className="h-px flex-1 bg-white/10" />
         </div>
         <div className="mt-3 space-y-2">
           {items.map((t) => (
             <label
               key={t.template_id}
-              className={`block cursor-pointer rounded-xl border px-4 py-3.5 text-sm transition ${
+              className={`block cursor-pointer rounded-2xl border px-4 py-3.5 text-sm transition ${
                 picked.includes(t.template_id)
-                  ? "border-iris bg-panel"
-                  : "border-edge bg-panel hover:border-dim"
+                  ? "border-white/50 bg-white/5"
+                  : "border-white/10 bg-[#0c0c0c] hover:border-white/25"
               }`}
             >
               <input
                 type="checkbox"
                 checked={picked.includes(t.template_id)}
                 onChange={() => toggle(t.template_id)}
-                className="mr-3 accent-[#7c5cff]"
+                className="mr-3 accent-white"
               />
-              <span className="font-bold">{t.title}</span>
-              <span className="block pl-6 pt-1 text-[13px] leading-relaxed text-dim">{t.objective}</span>
+              <span className="font-semibold text-white">{t.title}</span>
+              <span className="block pl-6 pt-1 text-[13px] leading-relaxed text-zinc-400">{t.objective}</span>
             </label>
           ))}
         </div>
@@ -99,14 +101,14 @@ export default function NewSimulation() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/" className="text-sm font-bold text-iris-soft hover:text-mist">
+    <main className="mx-auto max-w-2xl px-6 py-12">
+      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
         ← Overview
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight">New session</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-dim">
+      <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">New session</h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
         Your twin takes on up to 3 tasks in parallel — council lenses, calls, or a mix.{" "}
-        <Link href="/council" className="font-bold text-iris-soft">
+        <Link href="/council" className="font-semibold text-white underline underline-offset-4">
           Or ask the council a question →
         </Link>
       </p>
@@ -119,12 +121,12 @@ export default function NewSimulation() {
 
       <form onSubmit={submit} className="mt-6 space-y-6">
         <div>
-          <label htmlFor="twin" className="text-sm font-bold">Twin</label>
+          <label htmlFor="twin" className="text-sm font-semibold text-white">Twin</label>
           <select
             id="twin"
             value={twinId}
             onChange={(e) => setTwinId(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm font-semibold"
+            className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none transition focus:border-white/40 [&>option]:bg-zinc-900"
           >
             {twins.map((t) => (
               <option key={t.id} value={t.id}>
@@ -134,7 +136,7 @@ export default function NewSimulation() {
           </select>
         </div>
         <fieldset>
-          <legend className="text-sm font-bold">Tasks</legend>
+          <legend className="text-sm font-semibold text-white">Tasks</legend>
           {groups.map((g) => group(g, templates.filter((t) => t.type === g)))}
         </fieldset>
 

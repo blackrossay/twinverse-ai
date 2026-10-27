@@ -11,7 +11,7 @@ import {
   type SimulationRun,
 } from "@/lib/api";
 import TalkingVerdictPanel from "@/components/TalkingVerdict";
-import { Badge, Banner, Meter, Section, Skeleton } from "@/components/ui";
+import { Badge, Banner, Button, Meter, Section, Skeleton } from "@/components/ui";
 
 const TERMINAL = ["done", "partial", "failed"];
 
@@ -176,7 +176,7 @@ function RunView() {
 
       <div className="mt-6 space-y-4">
         {run.scenarios.map((s) => (
-          <article key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-5 py-4">
+          <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-6 py-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-bold">{s.spec.title}</h2>
               <Badge tone={tone(s.status)}>{s.status === "running" ? "running…" : s.status}</Badge>
@@ -248,7 +248,7 @@ function RunView() {
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-bold text-mist transition hover:border-dim"
+              className="shrink-0 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white"
             >
               Share verdict on WhatsApp
             </a>
@@ -262,7 +262,7 @@ function RunView() {
                 run.scenarios.find((s) => s.scenario_id === e.scenario_id)?.spec.title ??
                 e.template_id;
               return (
-                <article key={e.scenario_id} className="rounded-xl border border-edge bg-panel px-4 py-3.5">
+                <article key={e.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-5 py-4">
                   <h3 className="text-sm font-bold">{title}</h3>
                   {!e.evaluated ? (
                     <p className="mt-2 text-xs text-dim">Not evaluated: {e.skip_reason}</p>
@@ -319,7 +319,7 @@ function RunView() {
                 ["adaptation", newEv?.adaptation?.score, oldEv?.adaptation?.score],
               ] as const;
               return (
-                <article key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-5 py-4 text-sm">
+                <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-6 py-5 text-sm">
                   <h3 className="font-bold">{s.spec.title}</h3>
                   <p className="mt-1 font-mono text-xs text-dim">
                     {varDiff.length === 0
@@ -361,7 +361,7 @@ function RunView() {
             {run.scenarios.map((s) => {
               const d = draft[s.scenario_id] ?? { include: true, variables: { ...s.spec.variables }, objective: "" };
               return (
-                <div key={s.scenario_id} className="rounded-xl border border-edge bg-panel px-4 py-3.5">
+                <div key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-5 py-4">
                   <label className="flex cursor-pointer items-center gap-2.5 text-sm font-bold">
                     <input
                       type="checkbox"
@@ -372,7 +372,7 @@ function RunView() {
                           [s.scenario_id]: { ...d, include: e.target.checked },
                         }))
                       }
-                      className="accent-[#7c5cff]"
+                      className="accent-white"
                     />
                     {s.spec.title}
                   </label>
@@ -415,13 +415,9 @@ function RunView() {
                 </div>
               );
             })}
-            <button
-              type="submit"
-              disabled={rerunBusy}
-              className="rounded-lg bg-iris px-4 py-2 text-sm font-bold text-white transition hover:bg-iris-soft hover:text-abyss disabled:opacity-50"
-            >
+            <Button type="submit" disabled={rerunBusy}>
               {rerunBusy ? "Rerunning…" : "Rerun selected"}
-            </button>
+            </Button>
           </form>
         </Section>
       )}

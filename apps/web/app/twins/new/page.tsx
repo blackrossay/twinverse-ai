@@ -6,6 +6,9 @@ import { useState } from "react";
 import { createTwin } from "@/lib/api";
 import { Banner, PrimaryButton } from "@/components/ui";
 
+const inputCls =
+  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-white/40";
+
 export default function NewTwin() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -27,12 +30,12 @@ export default function NewTwin() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/" className="text-sm font-bold text-iris-soft hover:text-mist">
+    <main className="mx-auto max-w-2xl px-6 py-12">
+      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
         ← Overview
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight">New twin</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-dim">
+      <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">New twin</h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
         The AI reads the bio and extracts a structured identity — verified facts
         stay separate from inferred hypotheses. Takes ~30s on a live model.
       </p>
@@ -45,7 +48,7 @@ export default function NewTwin() {
 
       <form onSubmit={submit} className="mt-6 space-y-5">
         <div>
-          <label htmlFor="name" className="text-sm font-bold">
+          <label htmlFor="name" className="text-sm font-semibold text-white">
             Name or alias
           </label>
           <input
@@ -55,11 +58,11 @@ export default function NewTwin() {
             required
             maxLength={100}
             placeholder="e.g. Maya Chen"
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm outline-none transition placeholder:text-faint focus:border-iris"
+            className={inputCls}
           />
         </div>
         <div>
-          <label htmlFor="bio" className="text-sm font-bold">
+          <label htmlFor="bio" className="text-sm font-semibold text-white">
             Biography
           </label>
           <textarea
@@ -69,7 +72,7 @@ export default function NewTwin() {
             required
             rows={6}
             placeholder="Role, history, style, goals — a few sentences is enough."
-            className="mt-1.5 w-full rounded-lg border border-edge bg-panel px-3.5 py-2.5 text-sm outline-none transition placeholder:text-faint focus:border-iris"
+            className={inputCls}
           />
         </div>
         <PrimaryButton disabled={busy}>{busy ? "Extracting identity…" : "Create twin"}</PrimaryButton>

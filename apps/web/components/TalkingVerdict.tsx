@@ -12,7 +12,7 @@ import {
   type AvatarStatus,
   type TalkingVerdict,
 } from "@/lib/api";
-import { Banner, Section, Skeleton } from "@/components/ui";
+import { Banner, Button, GhostButton, Section, Skeleton, Waveform } from "@/components/ui";
 
 const PENDING = ["queued", "rendering"];
 
@@ -177,17 +177,15 @@ export default function TalkingVerdictPanel({ runId }: { runId: string }) {
               type="checkbox"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
-              className="accent-[#7c5cff]"
+              className="accent-white"
             />
             This is my own face and voice.
           </label>
-          <button
-            onClick={upload}
-            disabled={uploading}
-            className="mt-3 rounded-lg bg-iris px-4 py-2 text-sm font-bold text-white transition hover:bg-iris-soft hover:text-abyss disabled:opacity-50"
-          >
-            {uploading ? "Uploading…" : "Save my likeness"}
-          </button>
+          <div className="mt-3">
+            <Button onClick={upload} disabled={uploading}>
+              {uploading ? "Uploading…" : "Save my likeness"}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -198,26 +196,17 @@ export default function TalkingVerdictPanel({ runId }: { runId: string }) {
             <span className="text-faint">{status.lipsync_note}</span>
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={generate}
-              disabled={busy}
-              className="rounded-lg bg-iris px-4 py-2 text-sm font-bold text-white transition hover:bg-iris-soft hover:text-abyss disabled:opacity-50"
-            >
+            <Button onClick={generate} disabled={busy}>
               {busy ? "Requesting render…" : "Generate talking verdict"}
-            </button>
-            <button
-              onClick={remove}
-              className="rounded-lg border border-edge px-4 py-2 text-sm font-bold text-mist transition hover:border-dim"
-            >
-              Delete my likeness
-            </button>
+            </Button>
+            <GhostButton onClick={remove}>Delete my likeness</GhostButton>
           </div>
         </div>
       )}
 
       {job && PENDING.includes(job.status) && (
         <div>
-          <Skeleton lines={2} />
+          <Waveform bars={48} className="text-white/70" />
           <p className="mt-2 text-xs text-faint">
             Rendering locally… voice cloning plus video takes a few minutes on CPU. This
             page keeps checking.
@@ -252,25 +241,20 @@ export default function TalkingVerdictPanel({ runId }: { runId: string }) {
               download / share this clip
             </a>
           </p>
-          <button
-            onClick={remove}
-            className="mt-3 rounded-lg border border-edge px-4 py-2 text-sm font-bold text-mist transition hover:border-dim"
-          >
-            Delete my likeness
-          </button>
+          <div className="mt-3">
+            <GhostButton onClick={remove}>Delete my likeness</GhostButton>
+          </div>
         </div>
       )}
 
       {job?.status === "failed" && (
         <div>
           <Banner tone="red">{job.error || "Render failed."}</Banner>
-          <button
-            onClick={generate}
-            disabled={busy}
-            className="mt-3 rounded-lg border border-edge px-4 py-2 text-sm font-bold text-mist transition hover:border-dim disabled:opacity-50"
-          >
-            {busy ? "Retrying…" : "Try again"}
-          </button>
+          <div className="mt-3">
+            <GhostButton onClick={generate} disabled={busy}>
+              {busy ? "Retrying…" : "Try again"}
+            </GhostButton>
+          </div>
         </div>
       )}
     </Section>
