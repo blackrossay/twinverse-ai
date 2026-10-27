@@ -14,8 +14,10 @@ Built for the Meta AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 ## Status
 
-D1–D2 done: backend skeleton, live Meta Model API client, twin CRUD API,
-and a working web dashboard (Next.js). Simulations arrive D3–D4.
+MVP complete: twin CRUD + versioning, parallel 3-scenario simulations,
+evidence-backed comparison, rerun-with-diff, AI identity cards, Next.js UI.
+Docs: architecture, API, evaluation (with real benchmark numbers), security,
+demo script, submission pack — all in `docs/`.
 Repo: <https://github.com/blackrossay/twinverse-ai>.
 See [docs/DECISIONS.md](docs/DECISIONS.md) for the decision log.
 
@@ -100,8 +102,9 @@ Live-model tests run only when a key is configured; otherwise they skip
 - `apps/web` — Next.js + TypeScript + Tailwind frontend (scaffold next)
 - `services/api` — FastAPI backend: identity, simulation, evaluation, model client, storage
 - `services/api/twinverse/prompts/v1` — versioned prompt templates (shipped in the wheel)
-- `services/api/tests` — pytest suite (unit + API integration)
-- `docs` — decisions, architecture, API, evaluation methodology, demo script
+- `services/api/tests` — pytest suite (unit + API integration, incl. live-model tests)
+- `services/api/benchmarks` — repeatable structured-vs-baseline benchmark (live)
+- `docs` — decisions, architecture, API, evaluation, security, demo script, submission
 
 ## Key rules
 

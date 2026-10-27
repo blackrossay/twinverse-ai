@@ -4,8 +4,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+def _coerce_str_map(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    return {str(k): (v if isinstance(v, str) else json.dumps(v)) for k, v in value.items()}
+
+
+def _coerce_str_list(value: Any) -> Any:
+    if not isinstance(value, list):
+        return value
+    return [v if isinstance(v, str) else json.dumps(v) for v in value]
 
 from ..meta_client import MetaClient, MetaClientError
 from .schemas import (
@@ -28,6 +41,9 @@ class _Extracted(BaseModel):
     constraints: list[str] = []
     behavioral_hypotheses: list[HypothesisInput] = []
     communication_style: dict[str, str] = {}
+
+    _lists = field_validator("skills", "goals", "constraints", mode="before")(_coerce_str_list)
+    _style = field_validator("communication_style", mode="before")(_coerce_str_map)
 
 
 def render_prompt(name: str, bio: str) -> str:

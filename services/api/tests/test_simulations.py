@@ -51,6 +51,19 @@ def test_launch_and_poll_single(api_client, stub_model_client):
     assert sc["model"] == "stub"
 
 
+def test_scalar_values_coerced_to_strings(api_client, stub_model_client):
+    data = json.loads(GOOD_SIM)
+    data["variables_noted"] = {"budget": 480000, "ok": True}
+    data["assumptions"] = ["plain", 42]
+    stub_model_client(json.dumps(data))
+    tid = _make_twin(api_client)["id"]
+    run_id = api_client.post("/api/simulations", json={
+        "twin_id": tid, "scenarios": [{"template_id": "negotiation"}]}).json()["id"]
+    out = api_client.get(f"/api/simulations/{run_id}").json()["scenarios"][0]["output"]
+    assert out["variables_noted"] == {"budget": "480000", "ok": "true"}
+    assert out["assumptions"] == ["plain", "42"]
+
+
 def test_launch_validates_input(api_client, stub_model_client):
     stub_model_client(GOOD_SIM)
     tid = _make_twin(api_client)["id"]

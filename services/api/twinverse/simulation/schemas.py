@@ -2,10 +2,24 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
+from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+def _coerce_str_map(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    return {str(k): (v if isinstance(v, str) else json.dumps(v)) for k, v in value.items()}
+
+
+def _coerce_str_list(value: Any) -> Any:
+    if not isinstance(value, list):
+        return value
+    return [v if isinstance(v, str) else json.dumps(v) for v in value]
 
 
 def _utcnow() -> datetime:
@@ -69,6 +83,9 @@ class SimulationOutput(BaseModel):
     identity_facts_used: list[str] = []
     contradictions: list[Contradiction] = []
     variables_noted: dict[str, str] = {}
+
+    _vars = field_validator("variables_noted", mode="before")(_coerce_str_map)
+    _assume = field_validator("assumptions", "identity_facts_used", mode="before")(_coerce_str_list)
 
 
 class ScenarioResult(BaseModel):

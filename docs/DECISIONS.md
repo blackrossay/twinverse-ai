@@ -51,3 +51,20 @@
   twin detail with facts/hypotheses/style/versions/provenance. `npm run build`
   green. CORS opened for localhost:3000 only.
 - Sandbox blocks socket binds, so servers start in the owner's terminal.
+
+## D8 hardening + docs (2026-10-27)
+
+- Real-model hardening: `muse-spark-1.3` returns ints/bools inside string maps
+  (seen in benchmark) → scalar coercion validators on sim/extraction/eval
+  schemas + regression test. Repair-retry kept as second layer.
+- Benchmark (live, committed script `services/api/benchmarks/run.py`): 3-scenario
+  wall 37.1s vs ~87s of parts (parallelism proven); structured beats naive
+  baseline on deterministic grounding 5/5,4/5 vs 2/5. Full numbers in
+  docs/EVALUATION.md — measured, n=1, variance unknown.
+- Comparison endpoint is synchronous-with-cache (first GET ~1–2 min, then 0
+  model calls) — chosen over background+poll for simplicity at demo scale.
+- Voice input (muse-voice-transcribe-1.0) deliberately not built: no UI surface
+  needs it yet; documented as future work, not silently dropped.
+- Docs set complete: ARCHITECTURE, API, EVALUATION, SECURITY, DEMO_SCRIPT,
+  SUBMISSION. Owner-only items left: record video, take screenshots, portal
+  submit (track/rules need portal confirmation).
