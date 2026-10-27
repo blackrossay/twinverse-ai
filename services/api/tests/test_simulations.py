@@ -30,8 +30,24 @@ def test_templates_list(api_client):
     resp = api_client.get("/api/scenarios/templates")
     assert resp.status_code == 200
     ids = {t["template_id"] for t in resp.json()}
-    assert ids == {"negotiation", "escalation", "leadership"}
+    assert ids == {"negotiation", "escalation", "leadership",
+                   "preop-consent", "postop-triage", "difficult-consult"}
     assert all(t["objective"] and t["context"] for t in resp.json())
+
+
+def test_clinical_templates_tagged_and_grounded(api_client):
+    from twinverse.simulation.templates import REGIONS
+
+    templates = {t["template_id"]: t for t in api_client.get("/api/scenarios/templates").json()}
+    clinical = {tid for tid, t in templates.items() if t["clinical"]}
+    assert clinical == {"preop-consent", "postop-triage", "difficult-consult"}
+    for tid in clinical:
+        t = templates[tid]
+        assert t["anatomy"], f"{tid} must tag anatomical regions"
+        assert all(a["region"] in REGIONS for a in t["anatomy"])
+        assert "TRAINING SIMULATION" in t["context"]
+    for tid in ("negotiation", "escalation", "leadership"):
+        assert templates[tid]["clinical"] is False
 
 
 def test_launch_and_poll_single(api_client, stub_model_client):

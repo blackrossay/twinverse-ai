@@ -68,3 +68,26 @@
 - Docs set complete: ARCHITECTURE, API, EVALUATION, SECURITY, DEMO_SCRIPT,
   SUBMISSION. Owner-only items left: record video, take screenshots, portal
   submit (track/rules need portal confirmation).
+
+## Medical pivot (2026-10-27, owner-directed)
+
+- Demo lead is now the **Patient Twin** vertical: fictional patient personas
+  (Margaret Alvarez, David Okafor), 3 clinical training templates where the
+  twin plays the patient (pre-op consent, post-op triage, difficult consult).
+  Professional pack retained as second group. Engine unchanged — templates,
+  seeds, and UI only.
+- Templates carry `clinical` flag + `anatomy` region tags (canonical REGIONS
+  in templates.py, mirrored as 3D anchors). Every clinical context opens with
+  TRAINING SIMULATION framing; UI shows an education-only banner.
+- 3D body viewer (three.js 0.186, procedural mannequin — no external model,
+  zero license risk): lathe torso, capsule limbs, region markers linked to
+  scenario tags, orbit/zoom, click-select, legend, reduced-motion support.
+  Verified headless in Chrome on the exact bundled code: clean console,
+  recognizable figure from front/back/side + phone portrait. Drag/click
+  interactions code-reviewed, to be confirmed on first human open.
+- Live probe: 3 clinical sims all `done` (~25s each, parallel); twin holds
+  patient voice, volunteers the penicillin-allergy constraint unprompted,
+  reacts to variables (anxiety, speakerphone daughter).
+- Explicitly NOT claimed: real scan ingestion, surgical physics, physiology
+  simulation, diagnosis, or surgical planning. Those are the north star;
+  training encounters are the credible today.

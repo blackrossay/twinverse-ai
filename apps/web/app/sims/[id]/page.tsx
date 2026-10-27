@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import {
@@ -10,6 +11,15 @@ import {
   type Comparison,
   type SimulationRun,
 } from "@/lib/api";
+
+const BodyViewer = dynamic(() => import("@/components/BodyViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-8 text-center text-sm text-slate-400">
+      Loading 3D view…
+    </div>
+  ),
+});
 
 const TERMINAL = ["done", "partial", "failed"];
 
@@ -136,11 +146,19 @@ function RunView() {
   }
   if (!run) return <main className="mx-auto max-w-3xl px-6 py-10 text-sm">Loading…</main>;
 
+  const anyClinical = run.scenarios.some((s) => s.spec.clinical);
+  const regions = run.scenarios.flatMap((s) => s.spec.anatomy);
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">
         ← Dashboard
       </Link>
+      {anyClinical && (
+        <p className="mt-2 rounded-lg border border-amber-800 bg-amber-950 px-4 py-2 text-xs text-amber-200">
+          Training simulation for clinical education only — not medical advice.
+        </p>
+      )}
       {run.parent_run_id && (
         <p className="mt-2 text-xs text-slate-400">
           Rerun of{" "}
@@ -179,6 +197,11 @@ function RunView() {
               </span>
             </div>
             <p className="mt-1 text-xs text-slate-400">{s.spec.objective}</p>
+            {s.spec.anatomy.length > 0 && (
+              <p className="mt-1 text-xs text-slate-400">
+                Regions: {s.spec.anatomy.map((a) => a.label).join(" · ")}
+              </p>
+            )}
             {s.status === "running" && (
               <p className="mt-3 animate-pulse text-sm text-slate-400">
                 Simulating… this takes ~30–90s per scenario on a live model.
@@ -217,6 +240,17 @@ function RunView() {
           </article>
         ))}
       </div>
+
+      {regions.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+            Body twin
+          </h2>
+          <div className="mt-2">
+            <BodyViewer highlights={regions} height={340} />
+          </div>
+        </section>
+      )}
 
       {evalState === "loading" && (
         <p className="mt-8 animate-pulse text-sm text-slate-400">

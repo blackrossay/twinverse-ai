@@ -78,7 +78,7 @@ def test_seed_twins_idempotent(api_client):
     first = api_client.post("/api/twins/seed")
     assert first.status_code == 201
     names = {t["name"] for t in first.json()}
-    assert {"Alex Morgan", "Jordan Lee"} <= names
+    assert {"Alex Morgan", "Jordan Lee", "Margaret Alvarez", "David Okafor"} <= names
     assert first.json()[0]["payload"]["provenance"][0]["source"] == "seed"
     second = api_client.post("/api/twins/seed")
     assert second.json() == [], "re-seed must skip existing names"

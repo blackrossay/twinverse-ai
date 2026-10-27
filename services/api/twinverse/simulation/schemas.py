@@ -32,6 +32,12 @@ class Counterpart(BaseModel):
     attitude: str = ""
 
 
+class AnatomyTag(BaseModel):
+    region: str  # id from REGIONS in templates.py
+    label: str
+    note: str = ""
+
+
 class ScenarioTemplate(BaseModel):
     template_id: str
     type: str
@@ -42,6 +48,8 @@ class ScenarioTemplate(BaseModel):
     variables: dict[str, str] = {}
     counterpart: Counterpart = Counterpart()
     rubric_id: str = "default_v1"
+    clinical: bool = False  # training simulation; never real medical advice
+    anatomy: list[AnatomyTag] = []
 
 
 class ScenarioInput(BaseModel):
@@ -64,6 +72,8 @@ class ScenarioSpec(BaseModel):
     variables: dict[str, str] = {}
     counterpart: Counterpart = Counterpart()
     rubric_id: str = "default_v1"
+    clinical: bool = False
+    anatomy: list[AnatomyTag] = []
 
 
 class Decision(BaseModel):

@@ -5,20 +5,25 @@
 **TWINVERSE AI — One identity. Multiple realities. Measurable outcomes.**
 
 TWINVERSE AI is a reusable digital-twin simulation platform built on Meta's
-Model API. Create a structured identity once (verified facts kept strictly
+Model API — demonstrated through a **Patient Twin for clinical training**.
+Create a structured patient identity once (verified facts kept strictly
 separate from confidence-scored behavioral hypotheses), then the Parallel
-Reality Engine runs that frozen identity snapshot through three isolated
-scenarios — a pricing negotiation, a customer escalation, a leadership crisis —
-in parallel. A comparison dashboard scores every outcome against a published
-rubric (identity consistency, scenario effectiveness, adaptation) with quoted
-evidence, backed by deterministic code checks (fact-id grounding, variable
-acknowledgement). Change one scenario variable and rerun: the parent run is
-preserved byte-identical while the diff view shows what changed and why.
+Reality Engine runs that frozen snapshot through three isolated training
+encounters in parallel: a pre-op consent briefing, a post-op triage call, and
+a difficult consult about a delayed surgery. The twin plays the patient; a 3D
+body viewer links each scenario to anatomical regions. A comparison dashboard
+scores every outcome against a published rubric (identity consistency,
+scenario effectiveness, adaptation) with quoted evidence, backed by
+deterministic code checks (fact-id grounding, variable acknowledgement).
+Change one variable and rerun: the parent run is preserved byte-identical
+while the diff view shows what changed and why. Training simulation for
+education only — never medical advice.
 
 Built with `muse-spark-1.3` (extraction, simulation, evaluation) and
 `muse-image-1.0` (identity cards) via the Meta Model API; FastAPI + SQLite
-backend, Next.js dashboard. All fixtures are labeled; all scores trace to
-evidence; nothing is mocked in the demo path.
+backend, Next.js + three.js dashboard. The same engine also ships a
+professional pack (negotiation, escalation, leadership). All fixtures are
+labeled; all scores trace to evidence; nothing is mocked in the demo path.
 
 ## Links
 

@@ -77,6 +77,8 @@ export const createTwin = (body: { name: string; bio: string }) =>
 export const deleteTwin = (id: string) =>
   api<void>(`/api/twins/${id}`, { method: "DELETE" });
 
+export type AnatomyTag = { region: string; label: string; note: string };
+
 export type ScenarioTemplate = {
   template_id: string;
   type: string;
@@ -86,6 +88,8 @@ export type ScenarioTemplate = {
   constraints: string[];
   variables: Record<string, string>;
   counterpart: { name: string; role: string; attitude: string };
+  clinical: boolean;
+  anatomy: AnatomyTag[];
 };
 
 export type ScenarioResultView = {
@@ -98,6 +102,8 @@ export type ScenarioResultView = {
     constraints: string[];
     variables: Record<string, string>;
     counterpart: { name: string; role: string; attitude: string };
+    clinical: boolean;
+    anatomy: AnatomyTag[];
   };
   status: "running" | "done" | "failed";
   output: {
