@@ -1,5 +1,7 @@
 """Comparison endpoint: deterministic checks + cached model evaluation."""
 
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..evaluation.deterministic import check_scenario
@@ -9,15 +11,20 @@ from ..evaluation.store import EvaluationStore
 from ..identity.store import IdentityStore
 from ..meta_client import MetaClient, MetaClientError, default_client
 from ..routes.twins import get_store
-from ..settings import Settings
+from ..settings import get_settings
 from ..simulation.store import SimulationStore
 from .simulations import get_sim_store
 
 router = APIRouter(tags=["simulations"])
 
 
+@lru_cache(maxsize=4)
+def _eval_store_for(db_path: str) -> EvaluationStore:
+    return EvaluationStore(db_path)
+
+
 def get_eval_store() -> EvaluationStore:
-    return EvaluationStore(Settings().twinverse_db_path)
+    return _eval_store_for(get_settings().twinverse_db_path)
 
 
 def get_model_client() -> MetaClient:
@@ -47,6 +54,6 @@ def get_comparison(
     if cached is not None:
         return cached
     try:
-        return compute_comparison(run, twin, client, Settings().meta_model_eval, eval_store)
+        return compute_comparison(run, twin, client, get_settings().meta_model_eval, eval_store)
     except MetaClientError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from None

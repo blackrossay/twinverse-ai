@@ -1,6 +1,8 @@
 """Twin CRUD + seed + identity card endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from functools import lru_cache
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import FileResponse
 
 from ..identity.cards import build_prompt, card_path, delete_card, save_card
@@ -18,17 +20,22 @@ from ..identity.schemas import (
 from ..identity.seeds import SEEDS, seed_payload
 from ..identity.store import IdentityStore
 from ..meta_client import MetaClient, MetaClientError, default_client
-from ..settings import Settings
+from ..settings import get_settings
 
 twins_router = APIRouter(prefix="/api/twins", tags=["twins"])
 
 
+@lru_cache(maxsize=4)
+def _store_for(db_path: str) -> IdentityStore:
+    return IdentityStore(db_path)
+
+
 def get_store() -> IdentityStore:
-    return IdentityStore(Settings().twinverse_db_path)
+    return _store_for(get_settings().twinverse_db_path)
 
 
 def get_card_dir() -> str:
-    return Settings().twinverse_card_dir
+    return get_settings().twinverse_card_dir
 
 
 def get_model_client() -> MetaClient:
@@ -72,8 +79,12 @@ def create_twin(
 
 
 @twins_router.get("", response_model=list[Twin])
-def list_twins(store: IdentityStore = Depends(get_store)) -> list[Twin]:
-    return store.list_twins()
+def list_twins(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    store: IdentityStore = Depends(get_store),
+) -> list[Twin]:
+    return store.list_twins(limit=limit, offset=offset)
 
 
 @twins_router.post("/seed", response_model=list[TwinDetail], status_code=status.HTTP_201_CREATED)

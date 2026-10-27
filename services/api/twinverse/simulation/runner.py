@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from ..identity.schemas import TwinDetail
 from ..meta_client import MetaClient, MetaClientError
+from ..model_json import load_prompt, parse_json_object
 from .schemas import ScenarioSpec, SimulationOutput
 
 PROMPT_VERSION = "simulation/v1"
@@ -31,7 +31,7 @@ def render_prompt(twin: TwinDetail, spec: ScenarioSpec) -> str:
         "COMMUNICATION STYLE:",
         *style_lines,
     ]
-    template = _PROMPT_PATH.read_text()
+    template = load_prompt(str(_PROMPT_PATH))
     return (
         template.replace("{{IDENTITY}}", "\n".join(lines))
         .replace("{{TITLE}}", spec.title)
@@ -74,15 +74,4 @@ def run_scenario(
 
 
 def _parse(text: str) -> SimulationOutput:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`").strip()
-        if cleaned.lower().startswith("json"):
-            cleaned = cleaned[4:].strip()
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"not valid JSON: {exc}") from None
-    if not isinstance(data, dict):
-        raise ValueError("top-level JSON must be an object")
-    return SimulationOutput.model_validate(data)
+    return SimulationOutput.model_validate(parse_json_object(text))

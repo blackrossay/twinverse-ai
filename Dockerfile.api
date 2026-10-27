@@ -1,0 +1,11 @@
+# Twinverse API (no ML deps — inference is a separate service).
+FROM python:3.11-slim
+WORKDIR /app
+COPY services/api /app/api
+RUN pip install --no-cache-dir /app/api
+ENV TWINVERSE_DB_PATH=/data/twinverse.db \
+    TWINVERSE_CARD_DIR=/data/cards \
+    TWINVERSE_AVATAR_DIR=/data/avatars
+VOLUME ["/data"]
+EXPOSE 8000
+CMD ["uvicorn", "twinverse.main:app", "--host", "0.0.0.0", "--port", "8000"]

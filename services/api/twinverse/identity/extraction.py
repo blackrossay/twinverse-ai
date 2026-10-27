@@ -6,7 +6,18 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
+
+from ..meta_client import MetaClient, MetaClientError
+from ..model_json import load_prompt, parse_json_object
+from .schemas import (
+    Fact,
+    FactInput,
+    Hypothesis,
+    HypothesisInput,
+    IdentityPayload,
+    ProvenanceEntry,
+)
 
 
 def _coerce_str_map(value: Any) -> Any:
@@ -19,16 +30,6 @@ def _coerce_str_list(value: Any) -> Any:
     if not isinstance(value, list):
         return value
     return [v if isinstance(v, str) else json.dumps(v) for v in value]
-
-from ..meta_client import MetaClient, MetaClientError
-from .schemas import (
-    Fact,
-    FactInput,
-    Hypothesis,
-    HypothesisInput,
-    IdentityPayload,
-    ProvenanceEntry,
-)
 
 PROMPT_VERSION = "v1"
 _PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "v1" / "identity_extraction.md"
@@ -47,7 +48,7 @@ class _Extracted(BaseModel):
 
 
 def render_prompt(name: str, bio: str) -> str:
-    template = _PROMPT_PATH.read_text()
+    template = load_prompt(str(_PROMPT_PATH))
     return template.replace("{{NAME}}", name).replace("{{BIO}}", bio)
 
 
@@ -77,17 +78,7 @@ def extract_identity(bio: str, name: str, client: MetaClient) -> IdentityPayload
 
 
 def _parse(text: str) -> _Extracted:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`").strip()
-        if cleaned.lower().startswith("json"):
-            cleaned = cleaned[4:].strip()
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"not valid JSON: {exc}") from None
-    if not isinstance(data, dict):
-        raise ValueError("top-level JSON must be an object")
+    data = parse_json_object(text)
     for hyp in data.get("behavioral_hypotheses", []) or []:
         conf = (hyp or {}).get("confidence")
         if conf is not None and conf > 0.7:

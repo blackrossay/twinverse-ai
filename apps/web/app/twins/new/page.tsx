@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createTwin } from "@/lib/api";
-import { Banner, PrimaryButton } from "@/components/ui";
+import { Banner, PrimaryButton, BackLink} from "@/components/ui";
 
 const inputCls =
-  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-white/40";
+  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus-visible:shadow-[0_0_0_4px_rgba(250,249,246,0.22)] placeholder:text-zinc-400 focus:border-white/40";
 
 export default function NewTwin() {
   const router = useRouter();
@@ -31,9 +30,7 @@ export default function NewTwin() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
-        ← Overview
-      </Link>
+      <BackLink />
       <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">New twin</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
         The AI reads the bio and extracts a structured identity — verified facts

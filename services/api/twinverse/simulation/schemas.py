@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -23,7 +23,7 @@ def _coerce_str_list(value: Any) -> Any:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Counterpart(BaseModel):
@@ -45,10 +45,10 @@ class ScenarioTemplate(BaseModel):
 
 
 class ScenarioInput(BaseModel):
-    template_id: str
-    variables: dict[str, str] = {}
-    objective_override: str = ""
-    context_override: str = ""
+    template_id: str = Field(max_length=100)
+    variables: dict[str, str] = Field(default={}, max_length=20)
+    objective_override: str = Field(default="", max_length=2_000)
+    context_override: str = Field(default="", max_length=5_000)
 
 
 class ScenarioSpec(BaseModel):
@@ -116,7 +116,7 @@ class RunCreate(BaseModel):
 
 
 class RerunCreate(BaseModel):
-    scenario_ids: list[str] | None = None  # default: all parent scenarios
-    variables: dict[str, dict[str, str]] = {}  # scenario_id -> variable updates
-    objective_overrides: dict[str, str] = {}
-    context_overrides: dict[str, str] = {}
+    scenario_ids: list[str] | None = Field(default=None, max_length=3)
+    variables: dict[str, dict[str, str]] = Field(default={}, max_length=3)
+    objective_overrides: dict[str, str] = Field(default={}, max_length=3)
+    context_overrides: dict[str, str] = Field(default={}, max_length=3)

@@ -19,16 +19,45 @@ your decisions from three parallel lenses and handles calls/calendar within
 your constraints. Evidence-backed comparison, rerun-with-diff, AI identity
 cards, Next.js UI — plus **talking verdicts**: your twin speaks results in
 your cloned face and voice via a fully local open-source pipeline
-(docs/AVATAR.md).
+(docs/AVATAR.md). And now **Talk to your twin** (`/talk`): a multi-turn
+conversational voice agent — speak or type, your twin answers in character
+with memory, in your cloned voice and avatar (docs/CONVERSATION.md).
 Docs: architecture, API, evaluation (with real benchmark numbers), security,
 demo script, submission pack — all in `docs/`.
 Repo: <https://github.com/blackrossay/twinverse-ai>.
 See [docs/DECISIONS.md](docs/DECISIONS.md) for the decision log.
 
+## For judges — run it in 2 minutes
+
+Everything (backend, frontend, demo data) is in this repo. Pick one:
+
+**Option A — Docker (recommended, zero local installs):**
+
+```bash
+docker compose up --build
+# → http://localhost:3000  (API on :8000)
+```
+
+**Option B — Local script (Python 3.11+ and Node 18+):**
+
+```bash
+./scripts/demo.sh
+# → http://localhost:3000
+```
+
+Then: click **Seed demo personas** → **Ask the council**. Add
+`MODEL_API_KEY` to `.env` for live model calls; without a key the app still
+boots and demos in clearly labeled offline-fixture mode (fixture output is
+never presented as live). The voice/avatar clone stack is optional and
+server-side only — enable it later via the in-app **Your Clone** page
+(local engine or your cloud inference service); judges do **not** need it
+installed to evaluate the core product. Full deployment/infra guide:
+[docs/CLOUD.md](docs/CLOUD.md).
+
 ## Prerequisites
 
 - Python 3.11+ and [`uv`](https://docs.astral.sh/uv/) (or `pip`)
-- Node.js 18+ (frontend, lands D2–D3)
+- Node.js 18+ (frontend in `apps/web`)
 - A Meta Model API key ([dashboard → API keys](https://dev.meta.ai/)) for live
   model calls. Without one the API runs in labeled offline-fixture mode.
 
@@ -98,12 +127,23 @@ Run tests:
 pytest services/api/tests
 ```
 
+Lint/typecheck (also available as `make check`):
+
+```bash
+ruff check services/api/twinverse services/api/tests
+cd apps/web && npx tsc --noEmit && npx eslint . && npm run build
+```
+
+CI (`.github/workflows/ci.yml`) runs the same backend + frontend checks on
+every push and pull request. Backend dependencies are locked in
+`services/api/uv.lock`.
+
 Live-model tests run only when a key is configured; otherwise they skip
 (explicitly reported, never counted as green).
 
 ## Layout
 
-- `apps/web` — Next.js + TypeScript + Tailwind frontend (scaffold next)
+- `apps/web` — Next.js + TypeScript + Tailwind frontend
 - `services/api` — FastAPI backend: identity, simulation, evaluation, model client, storage
 - `services/api/twinverse/prompts/v1` — versioned prompt templates (shipped in the wheel)
 - `services/api/tests` — pytest suite (unit + API integration, incl. live-model tests)

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _new_id(prefix: str) -> str:
@@ -80,14 +80,14 @@ class HypothesisInput(BaseModel):
 
 class TwinCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
-    profile_type: str = "professional"
-    bio: str = ""
-    verified_facts: list[FactInput] = []
-    skills: list[str] = []
-    goals: list[str] = []
-    constraints: list[str] = []
-    behavioral_hypotheses: list[HypothesisInput] = []
-    communication_style: dict[str, str] = {}
+    profile_type: str = Field(default="professional", max_length=50)
+    bio: str = Field(default="", max_length=20_000)
+    verified_facts: list[FactInput] = Field(default=[], max_length=100)
+    skills: list[str] = Field(default=[], max_length=50)
+    goals: list[str] = Field(default=[], max_length=50)
+    constraints: list[str] = Field(default=[], max_length=50)
+    behavioral_hypotheses: list[HypothesisInput] = Field(default=[], max_length=50)
+    communication_style: dict[str, str] = Field(default={}, max_length=20)
     consent: dict = {}
 
     @property
@@ -106,11 +106,11 @@ class TwinPatch(BaseModel):
     """Provided lists replace those lists wholesale; omitted fields are preserved."""
 
     name: str | None = Field(default=None, min_length=1, max_length=100)
-    bio: str | None = None
-    verified_facts: list[FactInput] | None = None
-    skills: list[str] | None = None
-    goals: list[str] | None = None
-    constraints: list[str] | None = None
-    behavioral_hypotheses: list[HypothesisInput] | None = None
-    communication_style: dict[str, str] | None = None
+    bio: str | None = Field(default=None, max_length=20_000)
+    verified_facts: list[FactInput] | None = Field(default=None, max_length=100)
+    skills: list[str] | None = Field(default=None, max_length=50)
+    goals: list[str] | None = Field(default=None, max_length=50)
+    constraints: list[str] | None = Field(default=None, max_length=50)
+    behavioral_hypotheses: list[HypothesisInput] | None = Field(default=None, max_length=50)
+    communication_style: dict[str, str] | None = Field(default=None, max_length=20)
     consent: dict | None = None

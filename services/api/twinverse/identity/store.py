@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+from ..db import connect, init_schema
 from .schemas import IdentityPayload, Twin, TwinDetail
 
 _SCHEMA = """
@@ -30,21 +30,16 @@ CREATE TABLE IF NOT EXISTS identity_versions (
 
 
 def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class IdentityStore:
     def __init__(self, db_path: str | Path) -> None:
         self._db_path = Path(db_path)
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
-            conn.executescript(_SCHEMA)
+        init_schema(self._db_path, _SCHEMA)
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+    def _connect(self):
+        return connect(self._db_path)
 
     def create_twin(
         self, name: str, payload: IdentityPayload, profile_type: str = "professional"
@@ -88,9 +83,12 @@ class IdentityStore:
                 payload=IdentityPayload.model_validate_json(vrow["payload_json"]),
             )
 
-    def list_twins(self) -> list[Twin]:
+    def list_twins(self, limit: int = 100, offset: int = 0) -> list[Twin]:
         with self._connect() as conn:
-            rows = conn.execute("SELECT * FROM twins ORDER BY created_at").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM twins ORDER BY created_at LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
             return [
                 Twin(
                     id=r["id"],
@@ -114,12 +112,15 @@ class IdentityStore:
     def update_twin(
         self, twin_id: str, payload: IdentityPayload, name: str | None = None
     ) -> TwinDetail | None:
-        current = self.get_twin(twin_id)
-        if current is None:
-            return None
-        new_version = current.current_version + 1
         now = _utcnow_iso()
         with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT current_version FROM twins WHERE id = ?", (twin_id,)
+            ).fetchone()
+            if row is None:
+                return None
+            new_version = row["current_version"] + 1
             conn.execute(
                 "INSERT INTO identity_versions (twin_id, version, payload_json,"
                 " created_at) VALUES (?, ?, ?, ?)",

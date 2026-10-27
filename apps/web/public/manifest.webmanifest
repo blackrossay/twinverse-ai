@@ -1,0 +1,15 @@
+{
+  "name": "TWINVERSE AI",
+  "short_name": "Twinverse",
+  "description": "One identity. Multiple realities. Measurable outcomes.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon", "purpose": "any" }
+  ]
+}

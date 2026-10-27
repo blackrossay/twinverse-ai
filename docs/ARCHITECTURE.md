@@ -42,6 +42,19 @@ SQLite; repeat GETs make zero model calls.
 variable/objective overrides into a child run (`parent_run_id`); the parent
 run's rows are never touched (byte-identity covered by tests).
 
+## Reliability & performance notes
+
+- SQLite runs in WAL mode with a 5s busy timeout; schemas are created once
+  per process (not per request) and stores are shared singletons keyed by DB
+  path. List endpoints are paginated (`limit`/`offset`) and run listing uses a
+  single join instead of one query per run.
+- On startup, runs/verdict jobs left `running`/`queued`/`rendering` by a
+  previous process are marked `failed` ("interrupted by server restart") so
+  nothing polls forever.
+- Model-output JSON parsing is shared (`twinverse/model_json.py`, tolerates
+  fences/prose) and prompt templates are cached in memory after first read.
+- Every request gets an `X-Request-ID` header and a structured log line.
+
 ## Key invariants
 
 - Identity versions and run outputs are immutable once written; edits fork.

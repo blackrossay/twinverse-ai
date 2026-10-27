@@ -1,20 +1,20 @@
 """Tests for talking-verdict avatars. The heavy ML pipeline is stubbed; no torch."""
 
+import json
 import sys
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 
-from twinverse.avatar import pipeline, service
+from twinverse.avatar import service
 from twinverse.avatar.likeness import (
     LikenessError,
     delete_likeness,
     likeness_paths,
     save_likeness,
 )
-from twinverse.avatar.pipeline import PipelineError, PipelineInfo, check_pipeline
-from twinverse.avatar.schemas import TalkingVerdict
+from twinverse.avatar.pipeline import PipelineError, check_pipeline
 from twinverse.avatar.script import MAX_SCRIPT_CHARS, OPENING, build_verdict_script
 from twinverse.avatar.service import AvatarNotReady, render_job, request_verdict
 from twinverse.avatar.store import AvatarStore
@@ -24,10 +24,6 @@ from twinverse.settings import Settings
 from twinverse.simulation.schemas import ScenarioSpec
 from twinverse.simulation.store import SimulationStore
 from twinverse.simulation.templates import resolve_template
-from twinverse.evaluation.store import EvaluationStore
-from twinverse.routes.comparison import get_eval_store
-
-import json
 
 STRUCTURED = {
     "name": "Avatar Twin",
@@ -173,7 +169,7 @@ def test_pipeline_missing_everything_by_default(avatar_dir):
     assert info.lipsync_ready is False
     assert info.device == "cpu"
     blob = " ".join(info.missing)
-    assert "MeloTTS" in blob and "OpenVoice" in blob and "torch" in blob
+    assert "MeloTTS" in blob and "OpenVoice" in blob  # torch may be installed locally
 
 
 def test_pipeline_ready_with_stack_and_checkpoints(avatar_dir, monkeypatch, tmp_path):

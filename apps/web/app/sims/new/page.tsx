@@ -10,7 +10,7 @@ import {
   type ScenarioTemplate,
   type Twin,
 } from "@/lib/api";
-import { Banner, PrimaryButton } from "@/components/ui";
+import { Banner, PrimaryButton, BackLink} from "@/components/ui";
 
 const COUNCIL_DEFAULTS = ["council-strategist", "council-skeptic", "council-empath"];
 
@@ -36,7 +36,6 @@ export default function NewSimulation() {
         if (t.length > 0) setTwinId(t[0].id);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, []);
 
   function toggle(id: string) {
@@ -82,7 +81,7 @@ export default function NewSimulation() {
               className={`block cursor-pointer rounded-2xl border px-4 py-3.5 text-sm transition ${
                 picked.includes(t.template_id)
                   ? "border-white/50 bg-white/5"
-                  : "border-white/10 bg-[#0c0c0c] hover:border-white/25"
+                  : "border-white/10 bg-panel hover:border-white/25"
               }`}
             >
               <input
@@ -102,9 +101,7 @@ export default function NewSimulation() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
-        ← Overview
-      </Link>
+      <BackLink />
       <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">New session</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
         Your twin takes on up to 3 tasks in parallel — council lenses, calls, or a mix.{" "}
@@ -126,8 +123,10 @@ export default function NewSimulation() {
             id="twin"
             value={twinId}
             onChange={(e) => setTwinId(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none transition focus:border-white/40 [&>option]:bg-zinc-900"
+            disabled={twins.length === 0}
+            className="mt-1.5 min-h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none transition focus-visible:shadow-[0_0_0_4px_rgba(250,249,246,0.22)] focus:border-white/40 [&>option]:bg-zinc-900"
           >
+            {twins.length === 0 && <option value="">Loading twins…</option>}
             {twins.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name} ({t.profile_type}, v{t.current_version})

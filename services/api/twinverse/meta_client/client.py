@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import base64
 import time
 from dataclasses import dataclass
 
 from openai import OpenAI
 
-from ..settings import Settings
+from ..settings import Settings, get_settings
 
 FIXTURE_LABEL = "[OFFLINE FIXTURE — not a live model call]"
 
@@ -93,8 +94,6 @@ class MetaClient:
 
     def generate_image(self, prompt: str, *, model: str | None = None) -> bytes:
         """Generate a PNG image. Returns raw bytes. No fixture fallback."""
-        import base64
-
         if self._use_fixture:
             raise MetaClientError(
                 "image generation needs a live model call: set MODEL_API_KEY"
@@ -136,5 +135,5 @@ def _extract_text(response: object) -> str:
 
 
 def default_client() -> MetaClient:
-    """Build a client from env + project .env (fresh each call)."""
-    return MetaClient(Settings())
+    """Build a client from cached process settings."""
+    return MetaClient(get_settings())

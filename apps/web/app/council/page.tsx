@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { launchRun, listTwins, type Twin } from "@/lib/api";
-import { Banner, PrimaryButton, Waveform } from "@/components/ui";
+import { Banner, PrimaryButton, Waveform, BackLink} from "@/components/ui";
 
 const LENSES = ["council-strategist", "council-skeptic", "council-empath"];
 
@@ -15,7 +14,7 @@ const SAMPLES = [
 ];
 
 const inputCls =
-  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm font-medium text-white outline-none transition placeholder:text-zinc-600 focus:border-white/40";
+  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 min-h-11 text-sm font-medium text-white outline-none transition focus-visible:shadow-[0_0_0_4px_rgba(250,249,246,0.22)] placeholder:text-zinc-400 focus:border-white/40";
 
 export default function Council() {
   const router = useRouter();
@@ -33,7 +32,6 @@ export default function Council() {
         if (t.length > 0) setTwinId(t[0].id);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load twins"));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -62,9 +60,7 @@ export default function Council() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white">
-        ← Overview
-      </Link>
+      <BackLink />
       <h1 className="mt-4 text-4xl font-bold tracking-tight text-white">Twin Council</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
         Ask one question. Three lenses of your twin — the <strong className="text-zinc-200">Strategist</strong>, the{" "}
@@ -86,14 +82,22 @@ export default function Council() {
             id="twin"
             value={twinId}
             onChange={(e) => setTwinId(e.target.value)}
-            className={`${inputCls} [&>option]:bg-zinc-900`}
+            disabled={twins.length === 0}
+            aria-describedby={twins.length === 0 ? "twin-loading" : undefined}
+            className={`${inputCls} min-h-11 [&>option]:bg-zinc-900`}
           >
+            {twins.length === 0 && <option value="">Loading twins…</option>}
             {twins.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name} (v{t.current_version})
               </option>
             ))}
           </select>
+          {twins.length === 0 && (
+            <p id="twin-loading" role="status" className="mt-1.5 text-xs text-zinc-400">
+              Loading your twins — if this persists, check the backend is running.
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="question" className="text-sm font-semibold text-white">Your question</label>
@@ -112,7 +116,7 @@ export default function Council() {
                 key={s}
                 type="button"
                 onClick={() => setQuestion(s)}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-400 transition hover:border-white/30 hover:text-white"
+                className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/5 px-4 text-xs font-medium text-zinc-400 transition hover:border-white/30 hover:text-white"
               >
                 {s.length > 48 ? s.slice(0, 48) + "…" : s}
               </button>

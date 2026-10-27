@@ -1,0 +1,52 @@
+# Judge / demo stack:  docker compose up --build   →  http://localhost:3000
+# No API key needed to boot; set MODEL_API_KEY in .env for live model calls
+# (without it the app runs in clearly-labeled offline-fixture mode).
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      TWINVERSE_AVATAR_PROVIDER: ${TWINVERSE_AVATAR_PROVIDER:-local}
+      TWINVERSE_INFERENCE_URL: ${TWINVERSE_INFERENCE_URL:-}
+      TWINVERSE_INFERENCE_TOKEN: ${TWINVERSE_INFERENCE_TOKEN:-}
+      TWINVERSE_AUTH_REQUIRED: ${TWINVERSE_AUTH_REQUIRED:-false}
+      TWINVERSE_AUTH_SECRET: ${TWINVERSE_AUTH_SECRET:-}
+    volumes:
+      - twinverse-data:/data
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  # Optional GPU inference (voice clone + lip-sync). Needs the OpenVoice
+  # checkpoints mounted at /models — see docs/CLOUD.md. Enable with:
+  #   docker compose --profile inference up --build
+  inference:
+    profiles: ["inference"]
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    environment:
+      TWINVERSE_INFERENCE_TOKEN: ${TWINVERSE_INFERENCE_TOKEN:-}
+    volumes:
+      - ./models:/models
+    ports:
+      - "8100:8100"
+    # deploy:            # uncomment on a GPU host (nvidia runtime)
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }]
+
+volumes:
+  twinverse-data:

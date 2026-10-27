@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 export function Section({
@@ -25,11 +26,13 @@ export function Section({
 
 export function Card({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-6 py-5">{children}</div>
+    <div className="rounded-2xl border border-white/10 bg-panel px-6 py-5">{children}</div>
   );
 }
 
-const badgeTones: Record<string, string> = {
+export type Tone = "green" | "amber" | "red" | "slate" | "iris";
+
+const badgeTones: Record<Tone, string> = {
   green: "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20",
   amber: "bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20",
   red: "bg-red-500/10 text-red-300 ring-1 ring-red-500/20",
@@ -37,21 +40,35 @@ const badgeTones: Record<string, string> = {
   iris: "bg-white/10 text-white ring-1 ring-white/10",
 };
 
-export function Badge({ tone = "slate", children }: { tone?: string; children: ReactNode }) {
+export function Badge({ tone = "slate", children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeTones[tone]}`}>
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeTones[tone] ?? badgeTones.slate}`}>
       {children}
     </span>
   );
 }
 
+export function statusTone(status: string): Tone {
+  if (status === "done") return "green";
+  if (status === "failed") return "red";
+  if (status === "partial") return "amber";
+  return "slate";
+}
+
 export function Meter({ value, max = 5 }: { value: number; max?: number }) {
+  const clamped = Math.max(0, Math.min(value, max));
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+      <div
+        className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"
+        role="progressbar"
+        aria-valuenow={clamped}
+        aria-valuemin={0}
+        aria-valuemax={max}
+      >
         <div
           className="h-full rounded-full bg-white"
-          style={{ width: `${(Math.min(value, max) / max) * 100}%` }}
+          style={{ width: `${(clamped / max) * 100}%` }}
         />
       </div>
       <span className="font-mono text-xs font-semibold text-zinc-300">
@@ -61,15 +78,24 @@ export function Meter({ value, max = 5 }: { value: number; max?: number }) {
   );
 }
 
-const bannerTones: Record<string, string> = {
+const bannerTones = {
   red: "border-red-500/20 bg-red-500/10 text-red-200",
   amber: "border-amber-500/20 bg-amber-500/10 text-amber-200",
   neutral: "border-white/10 bg-white/5 text-zinc-300",
-};
+} as const;
 
-export function Banner({ tone = "neutral", children }: { tone?: string; children: ReactNode }) {
+export function Banner({
+  tone = "neutral",
+  children,
+}: {
+  tone?: keyof typeof bannerTones;
+  children: ReactNode;
+}) {
   return (
-    <p className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed ${bannerTones[tone]}`}>
+    <p
+      role={tone === "red" ? "alert" : undefined}
+      className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed ${bannerTones[tone]}`}
+    >
       {children}
     </p>
   );
@@ -77,7 +103,7 @@ export function Banner({ tone = "neutral", children }: { tone?: string; children
 
 export function Skeleton({ lines = 3 }: { lines?: number }) {
   return (
-    <div className="space-y-2" aria-label="Loading">
+    <div className="space-y-2" role="status" aria-label="Loading">
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
@@ -90,9 +116,9 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
 }
 
 const pillPrimary =
-  "rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200 disabled:opacity-50";
 const pillGhost =
-  "rounded-full border border-white/15 px-6 py-2.5 text-sm font-semibold text-white transition hover:border-white/40 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 px-6 py-2.5 text-sm font-semibold text-white transition hover:border-white/40 disabled:opacity-50";
 
 export function PrimaryButton({
   children,
@@ -144,9 +170,17 @@ export function GhostButton({
 
 export function GhostLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a href={href} className={pillGhost}>
+    <Link href={href} className={pillGhost}>
       {children}
-    </a>
+    </Link>
+  );
+}
+
+export function BackLink({ href = "/", label = "Overview" }: { href?: string; label?: string }) {
+  return (
+    <Link href={href} className="text-sm font-medium text-zinc-400 transition hover:text-white">
+      ← {label}
+    </Link>
   );
 }
 
@@ -163,14 +197,17 @@ export function Waveform({
   return (
     <div className={`flex h-10 items-center gap-[3px] ${className}`} aria-hidden="true">
       {Array.from({ length: bars }).map((_, i) => {
-        const h = 6 + 26 * Math.abs(Math.sin(i * 1.35) * Math.cos(i * 0.5));
+        // Fixed-precision values: raw floats serialize differently in SSR
+        // HTML vs the client DOM, which triggers hydration mismatches.
+        const h = (6 + 26 * Math.abs(Math.sin(i * 1.35) * Math.cos(i * 0.5))).toFixed(2);
+        const delay = ((i % 12) * 0.09).toFixed(2);
         return (
           <span
             key={i}
             className={`w-[3px] shrink-0 rounded-full bg-current ${
               animated ? "eq-bar" : "opacity-40"
             }`}
-            style={{ height: `${h}px`, animationDelay: `${(i % 12) * 0.09}s` }}
+            style={{ height: `${h}px`, animationDelay: `${delay}s` }}
           />
         );
       })}

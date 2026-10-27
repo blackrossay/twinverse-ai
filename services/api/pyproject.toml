@@ -21,6 +21,7 @@ dependencies = [
 dev = [
   "pytest>=8.0",
   "pytest-asyncio>=0.24",
+  "ruff>=0.6",
 ]
 # Talking-verdict avatars: local open-source voice + video. The two git
 # packages (MeloTTS, OpenVoice) install separately per docs/AVATAR.md.
@@ -37,3 +38,14 @@ packages = ["twinverse"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]  # B008: Depends()/File() in defaults is the FastAPI idiom
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]  # package re-exports

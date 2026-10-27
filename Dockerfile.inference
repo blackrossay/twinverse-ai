@@ -1,0 +1,20 @@
+# Twinverse inference worker: the ONLY image with the voice/avatar ML stack.
+# Build on (or for) a GPU host for MuseTalk lip-sync; CPU works (portrait mode).
+FROM python:3.11-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends git ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+COPY services/api /app/api
+COPY services/inference /app/inference
+RUN pip install --no-cache-dir "/app/api[avatar]" \
+    && pip install --no-cache-dir \
+      "git+https://github.com/myshell-ai/MeloTTS.git" \
+      "git+https://github.com/myshell-ai/OpenVoice.git" \
+    && python -m unidic download
+# OpenVoice V2 checkpoints: download at build or mount at /models (preferred).
+#   curl -L https://myshell-public-repo-hosting.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip
+#   unzip into /models/openvoice_v2/ (converter/, base_speakers/ses/en-newest.pth)
+ENV TWINVERSE_OPENVOICE_CKPT=/models/openvoice_v2 \
+    TWINVERSE_AVATAR_DIR=/tmp/avatars
+EXPOSE 8100
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8100", "--app-dir", "/app/inference"]

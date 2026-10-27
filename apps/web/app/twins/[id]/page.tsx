@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { createImage, deleteTwin, getTwin, listRuns, listVersions, twinImageUrl, type SimulationRun, type TwinDetail } from "@/lib/api";
-import { Badge, Banner, Section, Skeleton } from "@/components/ui";
+import { Badge, Banner, Section, Skeleton, statusTone } from "@/components/ui";
 
 export default function TwinPage() {
   return (
@@ -25,24 +25,26 @@ function TwinView() {
   const [imgCb, setImgCb] = useState(0);
   const [imgShown, setImgShown] = useState(true);
   const [imgBusy, setImgBusy] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      setError("");
-      const [t, v, r] = await Promise.all([getTwin(id, version), listVersions(id), listRuns(id)]);
-      setTwin(t);
-      setVersions(v);
-      setRuns(r);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load twin");
-    }
-  }, [id, version]);
-
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-  }, [load]);
+    let cancelled = false;
+    Promise.all([getTwin(id, version), listVersions(id), listRuns(id)])
+      .then(([t, v, r]) => {
+        if (cancelled) return;
+        setTwin(t);
+        setVersions(v);
+        setRuns(r);
+        setError("");
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load twin");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, version]);
 
   async function generateCard() {
     setImgBusy(true);
@@ -58,12 +60,16 @@ function TwinView() {
   }
 
   async function remove() {
-    if (!confirm(`Delete ${twin?.name} and all its versions?`)) return;
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
     try {
       await deleteTwin(id);
       router.push("/");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      setConfirmingDelete(false);
     }
   }
 
@@ -106,7 +112,7 @@ function TwinView() {
           <select
             value={version ?? twin.current_version}
             onChange={(e) => setVersion(Number(e.target.value))}
-            className="rounded-lg border border-edge bg-panel px-2.5 py-1.5 text-sm font-semibold"
+            className="min-h-11 rounded-lg border border-edge bg-panel px-3 text-sm font-semibold"
             aria-label="Identity version"
           >
             {versions.map((v) => (
@@ -115,9 +121,10 @@ function TwinView() {
           </select>
           <button
             onClick={remove}
-            className="rounded-full border border-red-500/30 px-3.5 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
+            onBlur={() => setConfirmingDelete(false)}
+            className="inline-flex min-h-11 items-center rounded-full border border-red-500/30 px-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
           >
-            Delete
+            {confirmingDelete ? `Confirm delete ${twin.name}?` : "Delete"}
           </button>
         </div>
       </div>
@@ -128,7 +135,7 @@ function TwinView() {
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-5 rounded-2xl border border-white/10 bg-[#0c0c0c] p-5">
+      <div className="mt-6 flex items-start gap-5 rounded-2xl border border-white/10 bg-panel p-5">
         {imgShown && (
           <Image
             src={twinImageUrl(twin.id, imgCb)}
@@ -145,17 +152,23 @@ function TwinView() {
           <button
             onClick={generateCard}
             disabled={imgBusy}
-            className="mt-3 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white disabled:opacity-50"
+            className="mt-3 inline-flex min-h-11 items-center rounded-full border border-white/15 px-4 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white disabled:opacity-50"
           >
             {imgBusy ? "Generating…" : imgShown ? "Regenerate identity card" : "Generate identity card"}
           </button>
+          <Link
+            href={`/talk?twin=${twin.id}`}
+            className="ml-2 mt-3 inline-flex min-h-11 items-center rounded-full bg-white px-4 text-xs font-semibold text-black transition hover:bg-zinc-200"
+          >
+            Talk to {twin.name}
+          </Link>
         </div>
       </div>
 
       <Section title={`Verified facts (${p.verified_facts.length})`}>
         <ul className="space-y-2">
           {p.verified_facts.map((f) => (
-            <li key={f.id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-3 text-sm text-zinc-200">
+            <li key={f.id} className="rounded-2xl border border-white/10 bg-panel px-4 py-3 text-sm text-zinc-200">
               {f.statement}
               <span className="ml-2 text-xs text-faint">· {f.category}</span>
             </li>
@@ -180,7 +193,7 @@ function TwinView() {
       <Section title={`Behavioral hypotheses — inferred, not verified (${p.behavioral_hypotheses.length})`}>
         <ul className="space-y-2">
           {p.behavioral_hypotheses.map((h) => (
-            <li key={h.id} className="rounded-2xl border border-dashed border-white/15 bg-[#0c0c0c] px-4 py-3 text-sm text-zinc-200">
+            <li key={h.id} className="rounded-2xl border border-dashed border-white/15 bg-panel px-4 py-3 text-sm text-zinc-200">
               <div className="flex items-center justify-between gap-3">
                 <span>{h.statement}</span>
                 <span className="shrink-0 font-mono text-xs font-bold text-iris-soft">
@@ -197,7 +210,7 @@ function TwinView() {
         <Section title="Communication style">
           <dl className="grid grid-cols-2 gap-2 text-sm">
             {Object.entries(p.communication_style).map(([k, v]) => (
-              <div key={k} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-2.5">
+              <div key={k} className="rounded-2xl border border-white/10 bg-panel px-4 py-2.5">
                 <dt className="text-xs text-faint">{k}</dt>
                 <dd className="font-semibold">{v}</dd>
               </div>
@@ -229,16 +242,12 @@ function TwinView() {
               <li key={r.id}>
                 <Link
                   href={`/sims/${r.id}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0c0c0c] px-4 py-2.5 text-sm transition hover:border-white/30"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-panel px-4 py-2.5 text-sm transition hover:border-white/30"
                 >
                   <span className="font-mono text-xs">{r.id}</span>
                   <span className="flex items-center gap-2 text-xs text-dim">
                     {r.scenarios.length} task{r.scenarios.length === 1 ? "" : "s"}
-                    <Badge
-                      tone={r.status === "done" ? "green" : r.status === "failed" ? "red" : r.status === "partial" ? "amber" : "slate"}
-                    >
-                      {r.status}
-                    </Badge>
+                    <Badge tone={statusTone(r.status)}>{r.status}</Badge>
                   </span>
                 </Link>
               </li>

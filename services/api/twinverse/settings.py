@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     twinverse_avatar_dir: str = "data/avatars"
     twinverse_openvoice_ckpt: str = "models/openvoice_v2"
     twinverse_musetalk_repo: str = ""
+    # Inference placement: "local" renders on this machine (dev/demo);
+    # "http" sends renders to your cloud inference service (production —
+    # customers never install anything). See docs/CLOUD.md.
+    twinverse_avatar_provider: str = "local"  # local | http
+    twinverse_inference_url: str = ""  # e.g. https://inference.yourcloud.example
+    twinverse_inference_token: str = ""  # shared secret with the inference service
+    inference_timeout_s: float = 900.0
+    # Accounts: when on, /api/* (except health + auth) requires a bearer token.
+    twinverse_auth_required: bool = False
+    twinverse_auth_secret: str = ""  # signs session tokens; set in production
 
     @property
     def fixtures_enabled(self) -> bool:
@@ -32,4 +42,14 @@ class Settings(BaseSettings):
         return not self.model_api_key  # auto: fixtures only when no key
 
 
-settings = Settings()
+def get_settings() -> Settings:
+    """Fresh settings per call so env changes (tests, key rotation) apply.
+
+    UI-saved inference overrides (Your Clone page) layer over env values.
+    """
+    from .app_config import apply_overrides
+
+    return apply_overrides(Settings())
+
+
+settings = get_settings()

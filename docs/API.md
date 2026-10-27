@@ -36,6 +36,32 @@ Base URL: `http://localhost:8000`. Errors are JSON `{detail}`.
 - `GET /api/simulations/{id}/talking-verdict` → latest job; poll until `done`/`failed`
 - `GET /api/avatar/video/{job_id}` → MP4 (404 until rendered)
 
+## Conversations (Talk to your twin)
+
+- `POST /api/twins/{id}/conversations` — body `{title?}` → 201 `Conversation` (empty turns)
+- `GET /api/twins/{id}/conversations?limit=` → `Conversation[]` (recent first)
+- `GET /api/conversations/{session_id}` → session with all turns
+- `DELETE /api/conversations/{session_id}` → 204
+- `POST /api/conversations/{session_id}/turns` — body `{message}` → twin `Turn` (sync LLM call, remembered)
+- `POST /api/conversations/turns/{turn_id}/voice` → 202 `Turn` with `voice_status=queued` (503 if avatar pipeline/likeness missing)
+- `POST /api/conversations/turns/{turn_id}/video` → 202 `Turn` with `video_status=queued`
+- `GET /api/conversations/turns/{turn_id}/audio` → WAV (404 until rendered)
+- `GET /api/conversations/turns/{turn_id}/video` → MP4 (404 until rendered)
+
+See docs/CONVERSATION.md for the voice-agent pipeline and limits.
+
+## Live Twin Studio
+
+- `POST /api/twins/{id}/live-sessions` — `{title?, mode: general|business|life|socials, platforms[], agenda[]}` → 201 `LiveSession`
+- `GET /api/twins/{id}/live-sessions` · `GET /api/live/{session_id}` · `DELETE /api/live/{session_id}`
+- `POST /api/live/{session_id}/end` · `POST /api/live/{session_id}/agenda` `{text}`
+- `POST /api/live/{session_id}/advance` → delivers next discussion point as a `LiveMessage`
+- `POST /api/live/{session_id}/chat` — `{platform, username, message, priority?}` → message with spoken twin `reply`
+- `POST /api/live/messages/{msg_id}/voice|video` → 202 (503 without avatar pipeline/likeness)
+- `GET /api/live/messages/{msg_id}/audio|video` · `GET /api/avatar/likeness/photo`
+
+See docs/LIVE.md for the multistream model and the real-platform bridge.
+
 ## Conventions
 
 - 422 = validation error (bad input, unknown template); 404 = twin/run/version/card missing; 502 = model call failed or key missing where a live call is required.

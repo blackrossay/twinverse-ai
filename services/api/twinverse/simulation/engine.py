@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from ..identity.schemas import TwinDetail
 from ..meta_client import MetaClient, MetaClientError
@@ -12,6 +13,8 @@ from .store import SimulationStore
 
 MAX_PARALLEL = 3
 SCENARIO_TIMEOUT_S = 180.0
+
+logger = logging.getLogger("twinverse.engine")
 
 
 def execute_run(
@@ -48,12 +51,14 @@ async def _execute_parallel(
                 result.model = model
                 result.latency_ms = latency
                 result.prompt_version = PROMPT_VERSION
-            except (asyncio.TimeoutError, TimeoutError):
+            except TimeoutError:
                 result.status = "failed"
                 result.error = f"scenario timed out after {scenario_timeout_s:g}s"
+                logger.warning("run %s scenario %s timed out", run_id, spec.scenario_id)
             except MetaClientError as exc:
                 result.status = "failed"
                 result.error = str(exc)
+                logger.warning("run %s scenario %s failed: %s", run_id, spec.scenario_id, exc)
             await asyncio.to_thread(store.update_scenario, run_id, result)
 
     await asyncio.gather(*(one(spec) for spec in specs))
@@ -62,7 +67,8 @@ async def _execute_parallel(
 
 def _rollup(store: SimulationStore, run_id: str) -> str:
     run = store.get_run(run_id)
-    assert run is not None
+    if run is None:
+        return "failed"
     statuses = [s.status for s in run.scenarios]
     if all(s == "done" for s in statuses):
         return "done"

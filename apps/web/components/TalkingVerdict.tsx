@@ -30,32 +30,27 @@ export default function TalkingVerdictPanel({ runId }: { runId: string }) {
 
   useEffect(() => {
     let stop = false;
-    async function poll() {
-      try {
-        const s = await getAvatarStatus();
+    getAvatarStatus()
+      .then(async (s) => {
         if (stop) return;
         setStatus(s);
         if (!s.configured) return;
         try {
           const v = await getTalkingVerdict(runId);
-          if (stop) return;
-          setJob(v);
-          if (PENDING.includes(v.status)) setTimeout(poll, 8000);
+          if (!stop) setJob(v);
         } catch (e) {
           if (stop) return;
           if (!(e instanceof ApiError && e.status === 404)) {
             setError(e instanceof Error ? e.message : "Failed to load talking verdict");
           }
         }
-      } catch (e) {
+      })
+      .catch((e) => {
         if (!stop) setError(e instanceof Error ? e.message : "Failed to load avatar status");
-      }
-    }
-    poll();
+      });
     return () => {
       stop = true;
     };
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [runId]);
 
   useEffect(() => {
@@ -219,7 +214,6 @@ export default function TalkingVerdictPanel({ runId }: { runId: string }) {
 
       {job?.status === "done" && job.video_url && (
         <div>
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <video
             controls
             playsInline

@@ -2,12 +2,14 @@
 
 from pathlib import Path
 
-from ..settings import Settings
+from ..settings import get_settings
 from .schemas import TwinDetail
 
 
 def card_path(twin_id: str, card_dir: str | None = None) -> Path:
-    base = Path(card_dir or Settings().twinverse_card_dir)
+    if Path(twin_id).name != twin_id or twin_id in ("", ".", ".."):
+        raise ValueError("invalid twin id")
+    base = Path(card_dir or get_settings().twinverse_card_dir)
     base.mkdir(parents=True, exist_ok=True)
     return base / f"{twin_id}.png"
 

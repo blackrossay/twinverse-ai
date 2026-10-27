@@ -1,0 +1,15 @@
+.git
+.venv
+.venv-avatar
+apps/web/node_modules
+apps/web/.next
+data
+.env
+.env.*
+models
+*.db
+*.db-shm
+*.db-wal
+dist
+__pycache__
+.pytest_cache

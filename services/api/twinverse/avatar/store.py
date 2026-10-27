@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+from ..db import connect
 from .schemas import TalkingVerdict
 
 _SCHEMA = """
@@ -28,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_talking_verdicts_run ON talking_verdicts (run_id,
 
 
 def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class AvatarStore:
@@ -45,9 +46,17 @@ class AvatarStore:
                 )
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return connect(self._db_path)
+
+    def recover_interrupted(self) -> int:
+        """Fail verdict jobs left queued/rendering by a previous process."""
+        with self._connect() as conn:
+            cur = conn.execute(
+                "UPDATE talking_verdicts SET status = 'failed',"
+                " error = 'interrupted by server restart'"
+                " WHERE status IN ('queued', 'rendering')"
+            )
+            return cur.rowcount
 
     def save(self, verdict: TalkingVerdict) -> TalkingVerdict:
         with self._connect() as conn:
@@ -73,7 +82,7 @@ class AvatarStore:
         return verdict
 
     def new_job(self, run_id: str, provider: str) -> TalkingVerdict:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return self.save(
             TalkingVerdict(
                 id=f"tv_{uuid4().hex[:8]}",
@@ -102,7 +111,7 @@ class AvatarStore:
 
     def touch(self, verdict: TalkingVerdict, **fields: object) -> TalkingVerdict:
         updated = verdict.model_copy(
-            update={**fields, "updated_at": datetime.now(timezone.utc)}
+            update={**fields, "updated_at": datetime.now(UTC)}
         )
         return self.save(updated)
 

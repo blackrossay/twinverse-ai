@@ -11,7 +11,7 @@ import {
   type SimulationRun,
 } from "@/lib/api";
 import TalkingVerdictPanel from "@/components/TalkingVerdict";
-import { Badge, Banner, Button, Meter, Section, Skeleton } from "@/components/ui";
+import { Badge, Banner, Button, Meter, Section, Skeleton, statusTone as tone } from "@/components/ui";
 
 const TERMINAL = ["done", "partial", "failed"];
 
@@ -21,13 +21,6 @@ export default function RunPage() {
       <RunView />
     </Suspense>
   );
-}
-
-function tone(s: string) {
-  if (s === "done") return "green";
-  if (s === "failed") return "red";
-  if (s === "partial") return "amber";
-  return "slate";
 }
 
 type RerunDraft = Record<string, { include: boolean; variables: Record<string, string>; objective: string }>;
@@ -46,6 +39,7 @@ function RunView() {
 
   useEffect(() => {
     let stop = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     async function poll() {
       try {
         const r = await getRun(id);
@@ -60,7 +54,7 @@ function RunView() {
           return init;
         });
         if (!TERMINAL.includes(r.status)) {
-          setTimeout(poll, 3000);
+          timer = setTimeout(poll, document.hidden ? 10_000 : 3000);
         } else {
           if (r.status !== "failed") {
             setEvalState("loading");
@@ -93,8 +87,8 @@ function RunView() {
     poll();
     return () => {
       stop = true;
+      if (timer) clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [id]);
 
   async function submitRerun(e: React.FormEvent) {
@@ -165,7 +159,9 @@ function RunView() {
             {run.scenarios.length === 1 ? "" : "s"}
           </p>
         </div>
-        <Badge tone={tone(run.status)}>{run.status === "running" ? "running…" : run.status}</Badge>
+        <span aria-live="polite">
+          <Badge tone={tone(run.status)}>{run.status === "running" ? "running…" : run.status}</Badge>
+        </span>
       </div>
 
       {error && (
@@ -176,7 +172,7 @@ function RunView() {
 
       <div className="mt-6 space-y-4">
         {run.scenarios.map((s) => (
-          <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-6 py-5">
+          <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-panel px-6 py-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-bold">{s.spec.title}</h2>
               <Badge tone={tone(s.status)}>{s.status === "running" ? "running…" : s.status}</Badge>
@@ -248,7 +244,7 @@ function RunView() {
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="shrink-0 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-white/15 px-4 text-xs font-semibold text-zinc-200 transition hover:border-white/40 hover:text-white"
             >
               Share verdict on WhatsApp
             </a>
@@ -262,7 +258,7 @@ function RunView() {
                 run.scenarios.find((s) => s.scenario_id === e.scenario_id)?.spec.title ??
                 e.template_id;
               return (
-                <article key={e.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-5 py-4">
+                <article key={e.scenario_id} className="rounded-2xl border border-white/10 bg-panel px-5 py-4">
                   <h3 className="text-sm font-bold">{title}</h3>
                   {!e.evaluated ? (
                     <p className="mt-2 text-xs text-dim">Not evaluated: {e.skip_reason}</p>
@@ -319,7 +315,7 @@ function RunView() {
                 ["adaptation", newEv?.adaptation?.score, oldEv?.adaptation?.score],
               ] as const;
               return (
-                <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-6 py-5 text-sm">
+                <article key={s.scenario_id} className="rounded-2xl border border-white/10 bg-panel px-6 py-5 text-sm">
                   <h3 className="font-bold">{s.spec.title}</h3>
                   <p className="mt-1 font-mono text-xs text-dim">
                     {varDiff.length === 0
@@ -361,7 +357,7 @@ function RunView() {
             {run.scenarios.map((s) => {
               const d = draft[s.scenario_id] ?? { include: true, variables: { ...s.spec.variables }, objective: "" };
               return (
-                <div key={s.scenario_id} className="rounded-2xl border border-white/10 bg-[#0c0c0c] px-5 py-4">
+                <div key={s.scenario_id} className="rounded-2xl border border-white/10 bg-panel px-5 py-4">
                   <label className="flex cursor-pointer items-center gap-2.5 text-sm font-bold">
                     <input
                       type="checkbox"
@@ -392,7 +388,7 @@ function RunView() {
                                 },
                               }))
                             }
-                            className="mt-1 w-full rounded-lg border border-edge bg-abyss px-2.5 py-1.5 text-sm font-semibold"
+                            className="mt-1 min-h-11 w-full rounded-lg border border-edge bg-abyss px-3 text-sm font-semibold"
                           />
                         </label>
                       ))}
@@ -407,7 +403,7 @@ function RunView() {
                             }))
                           }
                           placeholder="Leave blank to keep the original objective"
-                          className="mt-1 w-full rounded-lg border border-edge bg-abyss px-2.5 py-1.5 text-sm placeholder:text-faint"
+                          className="mt-1 min-h-11 w-full rounded-lg border border-edge bg-abyss px-3 text-sm placeholder:text-faint"
                         />
                       </label>
                     </div>

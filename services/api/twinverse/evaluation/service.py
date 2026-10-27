@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ..identity.schemas import TwinDetail
 from ..meta_client import MetaClient, MetaClientError
+from ..model_json import load_prompt, parse_json_object
 from ..simulation.schemas import ScenarioResult, SimulationRun
 from .deterministic import check_scenario
 from .schemas import ComparisonResult, DimensionScore, ScenarioEvaluation
@@ -33,7 +34,7 @@ def render_eval_prompt(twin: TwinDetail, result: ScenarioResult) -> str:
         f"VARIABLES NOTED: {json.dumps(out.variables_noted)}"
     )
     return (
-        _EVAL_PATH.read_text()
+        load_prompt(str(_EVAL_PATH))
         .replace("{{IDENTITY}}", facts)
         .replace("{{TITLE}}", result.spec.title)
         .replace("{{OBJECTIVE}}", result.spec.objective)
@@ -70,17 +71,7 @@ def evaluate_scenario(
 
 
 def _to_evaluation(result: ScenarioResult, text: str, model: str) -> ScenarioEvaluation:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`").strip()
-        if cleaned.lower().startswith("json"):
-            cleaned = cleaned[4:].strip()
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"not valid JSON: {exc}") from None
-    if not isinstance(data, dict):
-        raise ValueError("top-level JSON must be an object")
+    data = parse_json_object(text)
     try:
         return ScenarioEvaluation(
             scenario_id=result.scenario_id,
@@ -105,7 +96,7 @@ def summarize(evaluations: list[ScenarioEvaluation], client: MetaClient, model: 
             f" effectiveness={e.scenario_effectiveness.score},"
             f" adaptation={e.adaptation.score}"
         )
-    prompt = _SUMMARY_PATH.read_text().replace("{{SCORES}}", "\n".join(lines))
+    prompt = load_prompt(str(_SUMMARY_PATH)).replace("{{SCORES}}", "\n".join(lines))
     resp = client.generate(prompt, model=model, timeout_s=EVAL_TIMEOUT_S)
     if resp.fixture:
         raise MetaClientError("summary needs a live model call: set MODEL_API_KEY")

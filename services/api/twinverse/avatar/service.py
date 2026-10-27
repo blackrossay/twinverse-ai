@@ -6,7 +6,10 @@ from pathlib import Path
 
 from ..settings import Settings
 from .likeness import likeness_paths
-from .pipeline import PipelineError, check_pipeline, render_verdict
+from .pipeline import PipelineError
+from .provider import inference_ready
+from .provider import missing as provider_missing
+from .provider import render_verdict_media as render_verdict
 from .schemas import TalkingVerdict
 from .script import build_verdict_script
 from .store import AvatarStore
@@ -22,9 +25,8 @@ def request_verdict(
     run_id: str, summary: str, settings: Settings, store: AvatarStore
 ) -> TalkingVerdict:
     """Validate readiness and queue a render job. The worker renders async."""
-    info = check_pipeline(settings)
-    if not info.voice_ready:
-        raise AvatarNotReady(info.missing)
+    if not inference_ready(settings):
+        raise AvatarNotReady(provider_missing(settings))
     if not likeness_paths(settings.twinverse_avatar_dir).present:
         raise AvatarNotReady(["likeness: upload your photo + voice sample first"])
     job = store.new_job(run_id, provider="local")

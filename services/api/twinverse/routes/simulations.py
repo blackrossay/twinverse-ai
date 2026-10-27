@@ -1,11 +1,13 @@
 """Simulation launch/poll endpoints + scenario templates."""
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from functools import lru_cache
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 
 from ..identity.store import IdentityStore
 from ..meta_client import MetaClient, default_client
 from ..routes.twins import get_store
-from ..settings import Settings
+from ..settings import get_settings
 from ..simulation.engine import execute_run
 from ..simulation.schemas import (
     RerunCreate,
@@ -21,8 +23,13 @@ from ..simulation.templates import resolve_template
 router = APIRouter(tags=["simulations"])
 
 
+@lru_cache(maxsize=4)
+def _sim_store_for(db_path: str) -> SimulationStore:
+    return SimulationStore(db_path)
+
+
 def get_sim_store() -> SimulationStore:
-    return SimulationStore(Settings().twinverse_db_path)
+    return _sim_store_for(get_settings().twinverse_db_path)
 
 
 def get_model_client() -> MetaClient:
@@ -75,9 +82,12 @@ def launch_run(
 
 @router.get("/api/simulations", response_model=list[SimulationRun])
 def list_runs(
-    twin_id: str | None = None, sim_store: SimulationStore = Depends(get_sim_store)
+    twin_id: str | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    sim_store: SimulationStore = Depends(get_sim_store),
 ) -> list[SimulationRun]:
-    return sim_store.list_runs(twin_id)
+    return sim_store.list_runs(twin_id, limit=limit, offset=offset)
 
 
 @router.get("/api/simulations/{run_id}", response_model=SimulationRun)

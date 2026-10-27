@@ -18,6 +18,11 @@
   timeouts, comparison cached. Fixture mode never burns API budget.
 - **Validated I/O**: every model output is schema-validated before storage or
   display; invalid-after-repair returns a clear error instead of invented data.
+- **Hardened HTTP surface**: CORS allows only configured origins with an
+  explicit method/header allowlist; responses carry `X-Content-Type-Options`,
+  `X-Frame-Options`, and `Referrer-Policy` headers (API + web). Request bodies
+  are size-capped by schema, and likeness uploads are streamed with hard byte
+  limits (10 MB photo / 15 MB voice) instead of being read unbounded into memory.
 
 ## Limitations (read before judging or reusing)
 

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+from ..db import connect, init_schema
 from .schemas import ComparisonResult, DeterministicReport, ScenarioEvaluation
 
 _SCHEMA = """
@@ -27,15 +27,10 @@ CREATE TABLE IF NOT EXISTS run_comparisons (
 class EvaluationStore:
     def __init__(self, db_path: str | Path) -> None:
         self._db_path = Path(db_path)
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
-            conn.executescript(_SCHEMA)
+        init_schema(self._db_path, _SCHEMA)
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+    def _connect(self):
+        return connect(self._db_path)
 
     def save_evaluation(self, run_id: str, evaluation: ScenarioEvaluation) -> None:
         with self._connect() as conn:
@@ -50,7 +45,7 @@ class EvaluationStore:
             conn.execute(
                 "INSERT OR REPLACE INTO run_comparisons (run_id, summary, model, created_at)"
                 " VALUES (?, ?, ?, ?)",
-                (run_id, summary, model, datetime.now(timezone.utc).isoformat()),
+                (run_id, summary, model, datetime.now(UTC).isoformat()),
             )
 
     def get_comparison(
