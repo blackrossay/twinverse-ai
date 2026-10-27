@@ -44,8 +44,8 @@
   immutable versions, seed endpoint. Suite: 19 passed (incl. 2 live-model tests).
 - Fixed: missing version binding in `update_twin` INSERT (caught by tests).
 - Public repo: https://github.com/blackrossay/twinverse-ai (branch main).
-  Note: an empty `achambok/twinverse-ai` shell was auto-created during setup;
-  leave or delete it from the GitHub UI.
+  Note: an empty `achambok/twinverse-ai` shell was auto-created during setup
+  and has since been deleted by the owner.
 - Web UI (Next.js 16 + Tailwind v4, `apps/web`): dashboard with live/fixture
   badge, twin list, seed button; create-twin form (bio → AI extraction);
   twin detail with facts/hypotheses/style/versions/provenance. `npm run build`
