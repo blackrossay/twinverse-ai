@@ -18,6 +18,7 @@ from .routes.auth import router as auth_router
 from .routes.avatar import router as avatar_router
 from .routes.comparison import router as comparison_router
 from .routes.conversations import router as conversations_router
+from .routes.demo import router as demo_router
 from .routes.live import router as live_router
 from .routes.settings import router as settings_router
 from .routes.simulations import router as simulations_router
@@ -105,6 +106,7 @@ async def request_context(request: Request, call_next):
 
 
 app.include_router(auth_router)
+app.include_router(demo_router)
 app.include_router(settings_router)
 app.include_router(twins_router)
 app.include_router(conversations_router)
