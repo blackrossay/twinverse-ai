@@ -376,6 +376,12 @@ export const requestLiveVoice = (msgId: string) =>
 export const requestLiveVideo = (msgId: string) =>
   api<LiveMessage>(`/api/live/messages/${msgId}/video`, { method: "POST" });
 export const likenessPhotoUrl = () => `${apiBase()}/api/avatar/likeness/photo`;
+export const stageImageUrl = (id: string, cacheBuster = 0) =>
+  `${apiBase()}/api/twins/${id}/stage-image?cb=${cacheBuster}`;
+export const createStageImage = (id: string) =>
+  api<{ twin_id: string; url: string; bytes: number }>(`/api/twins/${id}/stage-image`, {
+    method: "POST",
+  });
 
 export type InferenceSettings = {
   provider: string;

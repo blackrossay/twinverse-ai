@@ -5,7 +5,15 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import FileResponse
 
-from ..identity.cards import build_prompt, card_path, delete_card, save_card
+from ..identity.cards import (
+    build_prompt,
+    build_stage_prompt,
+    card_path,
+    delete_card,
+    save_card,
+    save_stage,
+    stage_path,
+)
 from ..identity.extraction import extract_identity
 from ..identity.schemas import (
     Fact,
@@ -172,6 +180,39 @@ def create_image(
         raise HTTPException(status_code=502, detail=str(exc)) from None
     save_card(twin_id, png, card_dir)
     return {"twin_id": twin_id, "url": f"/api/twins/{twin_id}/image", "bytes": len(png)}
+
+
+@twins_router.post("/{twin_id}/stage-image", status_code=status.HTTP_201_CREATED)
+def create_stage_image(
+    twin_id: str,
+    store: IdentityStore = Depends(get_store),
+    card_dir: str = Depends(get_card_dir),
+    client: MetaClient = Depends(get_model_client),
+) -> dict:
+    """Generate a live-stage backdrop for this twin with muse-image-1.0."""
+    twin = store.get_twin(twin_id)
+    if twin is None:
+        raise HTTPException(status_code=404, detail="twin not found")
+    try:
+        png = client.generate_image(build_stage_prompt(twin))
+    except MetaClientError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    save_stage(twin_id, png, card_dir)
+    return {"twin_id": twin_id, "url": f"/api/twins/{twin_id}/stage-image", "bytes": len(png)}
+
+
+@twins_router.get("/{twin_id}/stage-image")
+def get_stage_image(
+    twin_id: str,
+    store: IdentityStore = Depends(get_store),
+    card_dir: str = Depends(get_card_dir),
+) -> FileResponse:
+    if store.get_twin(twin_id) is None:
+        raise HTTPException(status_code=404, detail="twin not found")
+    path = stage_path(twin_id, card_dir)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no stage backdrop yet")
+    return FileResponse(path, media_type="image/png")
 
 
 @twins_router.get("/{twin_id}/image")

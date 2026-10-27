@@ -31,5 +31,31 @@ def save_card(twin_id: str, png: bytes, card_dir: str | None = None) -> Path:
     return path
 
 
+def stage_path(twin_id: str, card_dir: str | None = None) -> Path:
+    if Path(twin_id).name != twin_id or twin_id in ("", ".", ".."):
+        raise ValueError("invalid twin id")
+    base = Path(card_dir or get_settings().twinverse_card_dir)
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"{twin_id}-stage.png"
+
+
+def build_stage_prompt(twin: TwinDetail) -> str:
+    skills = ", ".join(twin.payload.skills[:3]) or "creative work"
+    goals = ", ".join(twin.payload.goals[:2]) or "growing an audience"
+    return (
+        "Wide 16:9 live-stream stage backdrop for a creator broadcast,"
+        f" abstract ambient gradient environment suggesting {skills} and {goals},"
+        " deep charcoal with soft emerald and violet light ribbons, cinematic depth,"
+        " empty center space for a presenter, no people, no faces, no text, no letters,"
+        " no logos, premium minimal broadcast design"
+    )
+
+
+def save_stage(twin_id: str, png: bytes, card_dir: str | None = None) -> Path:
+    path = stage_path(twin_id, card_dir)
+    path.write_bytes(png)
+    return path
+
+
 def delete_card(twin_id: str, card_dir: str | None = None) -> None:
     card_path(twin_id, card_dir).unlink(missing_ok=True)

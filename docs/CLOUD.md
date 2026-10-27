@@ -11,6 +11,28 @@ The half-finished local install on this dev machine (`.venv-avatar`, Python
 convenience only. Disk is also nearly full, which is another reason not to
 run production inference on a laptop.
 
+## Meta Muse models — what we use and why (probed live, Oct 2026)
+
+Models visible to this project's key: `muse-spark-1.3` (text/reasoning),
+`muse-wonder-1.0` (text/multimodal reasoning), `muse-image-1.0` (image
+generation), `muse-voice-transcribe-1.0` (listed; transcription endpoint
+not exposed to this key), `sam-3.1` (segmentation).
+
+- **We do use Muse image**: identity cards and Live stage backdrops are
+  generated with `muse-image-1.0` (`POST /api/twins/{id}/image`,
+  `POST /api/twins/{id}/stage-image`).
+- **There is no Muse video-generation model available to this key.** We
+  probed the OpenAI-compatible `/videos` endpoint live: it returns
+  `model_not_found` for `muse-wonder-1.0`, and Wonder via `/responses`
+  produces text. If Meta exposes a `muse-video-*` model later, it slots
+  into the avatar provider (`twinverse/avatar/provider.py`) as another
+  render backend — the call sites don't change.
+- **Why not text-to-video for the avatar anyway?** The product needs a
+  *specific person's likeness saying specific words with lip-sync* —
+  that's avatar rendering (MuseTalk/portrait + cloned voice), not generic
+  text-to-video generation. Muse image handles the stills/backdrops;
+  Muse spark handles the brain; the avatar pipeline handles the person.
+
 ## Target architecture (what is built now)
 
 ```text

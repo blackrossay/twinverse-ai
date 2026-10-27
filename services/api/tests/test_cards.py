@@ -46,3 +46,15 @@ def test_card_prompt_avoids_real_likeness():
                       payload=IdentityPayload(skills=["negotiation"]))
     prompt = build_prompt(twin)
     assert "no real person" in prompt and "no photorealistic face" in prompt
+
+
+def test_stage_image_round_trip(api_client, stub_model_client):
+    stub_model_client()
+    tid = api_client.post("/api/twins", json={
+        "name": "Stage Twin", "verified_facts": [{"statement": "s", "category": "w"}],
+        "skills": ["streaming"]}).json()["id"]
+    assert api_client.get(f"/api/twins/{tid}/stage-image").status_code == 404
+    created = api_client.post(f"/api/twins/{tid}/stage-image")
+    assert created.status_code == 201, created.text
+    got = api_client.get(f"/api/twins/{tid}/stage-image")
+    assert got.status_code == 200 and got.content == b"fakepng-bytes"

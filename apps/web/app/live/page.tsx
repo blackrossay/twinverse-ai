@@ -9,6 +9,7 @@ import {
   advanceLive,
   apiBase,
   createLiveSession,
+  createStageImage,
   endLiveSession,
   getAvatarStatus,
   getLiveDestination,
@@ -20,6 +21,7 @@ import {
   publishLive,
   requestLiveVideo,
   requestLiveVoice,
+  stageImageUrl,
   setLiveDestination,
   twinImageUrl,
   unpublishLive,
@@ -88,6 +90,8 @@ function LiveView() {
   const [session, setSession] = useState<LiveSession | null>(null);
   const [avatar, setAvatar] = useState<AvatarStatus | null>(null);
   const [stagePhoto, setStagePhoto] = useState(true);
+  const [backdrop, setBackdrop] = useState(true);
+  const [backdropCb, setBackdropCb] = useState(0);
   const [title, setTitle] = useState("");
   const [mode, setMode] = useState("socials");
   const [platforms, setPlatforms] = useState<string[]>(["youtube"]);
@@ -113,7 +117,8 @@ function LiveView() {
     listTwins()
       .then((t) => {
         setTwins(t);
-        if (t.length > 0) setTwinId(t[0].id);
+        const wanted = new URLSearchParams(window.location.search).get("twin");
+        if (t.length > 0) setTwinId(t.some((x) => x.id === wanted) ? (wanted as string) : t[0].id);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load twins"));
     getAvatarStatus().then(setAvatar).catch(() => setAvatar(null));
@@ -399,6 +404,10 @@ function LiveView() {
         <section aria-label="Live stage" className="lg:col-span-3">
           <div className="bento relative overflow-hidden p-0">
             <div className="relative aspect-video bg-black">
+              {backdrop && twin && (
+                <Image src={stageImageUrl(twin.id, backdropCb)} alt="" fill unoptimized
+                  onError={() => setBackdrop(false)} className="object-cover opacity-50" />
+              )}
               {stagePhoto ? (
                 <Image src={likenessPhotoUrl()} alt={`Live avatar of ${twin?.name ?? "your twin"}`}
                   fill unoptimized onError={() => setStagePhoto(false)}
@@ -437,6 +446,23 @@ function LiveView() {
               }} aria-pressed={voiceOn}
               className="inline-flex min-h-11 items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:border-white/40">
               Voice {voiceOn ? "on" : "off"}
+            </button>
+            <button
+              onClick={async () => {
+                if (!twin) return;
+                setBusy(true);
+                try {
+                  await createStageImage(twin.id);
+                  setBackdrop(true);
+                  setBackdropCb((v) => v + 1);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Stage backdrop needs a live model key");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="inline-flex min-h-11 items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition hover:border-white/40">
+              Generate stage backdrop
             </button>
             {session.status === "live" ? (
               <GhostButton onClick={async () => { await endLiveSession(session.id).catch(() => {}); await refresh(session.id); }}>End stream</GhostButton>

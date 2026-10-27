@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { launchRun, listTwins, type Twin } from "@/lib/api";
 import { Banner, PrimaryButton, Waveform, BackLink} from "@/components/ui";
 
@@ -16,8 +16,19 @@ const SAMPLES = [
 const inputCls =
   "mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 min-h-11 text-sm font-medium text-white outline-none transition focus-visible:shadow-[0_0_0_4px_rgba(250,249,246,0.22)] placeholder:text-zinc-400 focus:border-white/40";
 
-export default function Council() {
+export default function CouncilPage() {
+  return (
+    <Suspense>
+      <Council />
+    </Suspense>
+  );
+}
+
+function Council() {
   const router = useRouter();
+  const params = useSearchParams();
+  const wantedTwin = params.get("twin");
+  const wantedQ = params.get("q");
   const [twins, setTwins] = useState<Twin[]>([]);
   const [twinId, setTwinId] = useState("");
   const [question, setQuestion] = useState("");
@@ -29,10 +40,11 @@ export default function Council() {
     listTwins()
       .then((t) => {
         setTwins(t);
-        if (t.length > 0) setTwinId(t[0].id);
+        if (t.length > 0) setTwinId(t.some((x) => x.id === wantedTwin) ? (wantedTwin as string) : t[0].id);
+        if (wantedQ) setQuestion(wantedQ);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load twins"));
-  }, []);
+  }, [wantedTwin, wantedQ]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

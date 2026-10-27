@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { listRuns, listTwins, seedTwins, twinImageUrl, type SimulationRun, type Twin } from "@/lib/api";
 import { Badge, Banner, Skeleton, statusTone, Waveform } from "@/components/ui";
 import { anime as animeMotion, animationScope, springs } from "@/lib/motion";
 import HowItWorks from "@/components/HowItWorks";
+import { PersonaSwitcher, personaTheme } from "@/components/voice";
 
 function TwinAvatar({ id, name }: { id: string; name: string }) {
   const [shown, setShown] = useState(true);
@@ -30,20 +32,30 @@ function TwinAvatar({ id, name }: { id: string; name: string }) {
   );
 }
 
+const MODES = [
+  { id: "decide", label: "Decide", cta: "Ask the council", placeholder: "Should I take the in-house job or go freelance?" },
+  { id: "talk", label: "Talk", cta: "Start talking", placeholder: "What should I protect this week?" },
+  { id: "live", label: "Go live", cta: "Open Live Studio", placeholder: "Stream title or topic — you’ll set points inside" },
+] as const;
+
 export default function Dashboard() {
+  const router = useRouter();
+  const [selectedId, setSelectedId] = useState("");
+  const [mode, setMode] = useState<(typeof MODES)[number]["id"]>("decide");
+  const [command, setCommand] = useState("");
   const [twins, setTwins] = useState<Twin[]>([]);
   const [runs, setRuns] = useState<SimulationRun[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
-  const bentoRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
     try {
       setError("");
       const [t, r] = await Promise.all([listTwins(), listRuns()]);
       setTwins(t);
+      if (t.length > 0) setSelectedId((cur) => cur || t[0].id);
       setRuns(r.slice(0, 8));
       setLoaded(true);
     } catch (e) {
@@ -65,6 +77,7 @@ export default function Dashboard() {
         }
         if (cancelled) return;
         setTwins(t);
+        if (t.length > 0) setSelectedId((cur) => cur || t[0].id);
         setRuns(r.slice(0, 8));
         setLoaded(true);
       })
@@ -115,19 +128,6 @@ export default function Dashboard() {
           .add("#heroCtas", { y: ["10px","0px"], opacity: [0,1], duration: 500 }, "-=200")
           .add("#heroWave", { opacity: [0,1], scale: [{ from: .96 }, { to: 1 }], duration: 700 }, "-=100");
 
-        // bento grid stagger
-        if(bentoRef.current){
-          const cards = bentoRef.current.querySelectorAll(".bento");
-          scope.track(animate(cards, {
-            y: [{ from: "20px" }, { to: "0px" }],
-            opacity: [{ from: 0 }, { to: 1 }],
-            scale: [{ from: .97 }, { to: 1 }],
-            duration: 700,
-            delay: stagger(70, { from: "first", grid: [2,3] }),
-            ease: spring(springs.gentle),
-          }));
-        }
-
         // twins grid stagger when enters viewport
         try{
           const twinsGrid = document.querySelectorAll("#twinsGrid .bento");
@@ -166,6 +166,17 @@ export default function Dashboard() {
     })();
     return () => { cleanupFns.forEach(fn=>fn()); scope.cancelAll(); };
   }, [loaded, twins.length, runs.length]);
+
+  const selected = twins.find((t) => t.id === selectedId) ?? twins[0];
+
+  function dispatch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    const q = encodeURIComponent(command.trim());
+    if (mode === "decide") router.push(`/council?twin=${selected.id}${q ? `&q=${q}` : ""}`);
+    else if (mode === "talk") router.push(`/talk?twin=${selected.id}`);
+    else router.push(`/live?twin=${selected.id}`);
+  }
 
   async function seed() {
     setBusy(true);
@@ -268,91 +279,56 @@ export default function Dashboard() {
       {/* DASHBOARD */}
       <HowItWorks />
 
-      <div ref={bentoRef} className="mt-2 grid grid-cols-12 gap-4">
-        <div className="bento bento-accent col-span-12 md:col-span-7 p-6 md:p-7">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="mono flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-zinc-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> Live council pipeline
+      {/* Persona workspace — the app entry: one persona, one command */}
+      {loaded && twins.length > 0 && (
+        <section aria-label="Persona workspace" className="glass-floating mt-2 rounded-[28px] p-6 md:p-7">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">Your persona</p>
+            <div className="ml-auto">
+              <PersonaSwitcher personas={twins} activeId={selected?.id ?? ""} onSwitch={setSelectedId} />
+            </div>
+          </div>
+          {selected && (
+            <div className="mt-5 flex flex-wrap items-center gap-4">
+              <TwinAvatar id={selected.id} name={selected.name} />
+              <div className="min-w-0">
+                <h2 className="display truncate text-[30px] leading-[0.95] text-white">{selected.name}</h2>
+                <p className="mt-1 text-xs text-zinc-400">
+                  {selected.profile_type} · identity v{selected.current_version} ·{" "}
+                  <Link href={`/twins/${selected.id}`} className="font-semibold text-zinc-200 underline underline-offset-4">View identity</Link>
+                </p>
               </div>
-              <h2 className="display mt-3 text-[28px] leading-[0.95]">Three voices,<br /><span className="italic text-zinc-400">one decision.</span></h2>
-              <p className="mt-3 max-w-[36ch] text-[13px] leading-relaxed text-zinc-400">Parallel debate → synthesis → evidence scoring. Every run measurable, every twin versioned. Spring physics on hover.</p>
+              <span className="ml-auto hidden items-center gap-2 md:inline-flex">
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: personaTheme(selected.id + selected.name).gradient }} />
+                <span className="text-xs font-semibold text-zinc-300">{personaTheme(selected.id + selected.name).label} glow</span>
+              </span>
             </div>
-            <div className="hidden h-12 w-12 shrink-0 place-items-center rounded-full bg-white text-black md:grid">⟡</div>
-          </div>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            {[
-              { k: "Optimist", v: "Sees upside", c: "#00FF88" },
-              { k: "Realist", v: "Balances risk", c: "#FAF9F6" },
-              { k: "Skeptic", v: "Finds flaws", c: "#B18CFF" },
-            ].map(o=>(
-              <div key={o.k} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="mono text-[10px] uppercase tracking-wide text-zinc-400">{o.k}</div>
-                <div className="mt-1 text-[13px] font-semibold text-white">{o.v}</div>
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full" style={{ width: `${o.k==="Realist"? 72 : o.k==="Optimist"? 64 : 58}%`, background: o.c }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bento col-span-12 md:col-span-5 p-6">
-          <div className="mono text-[11px] uppercase tracking-[0.16em] text-zinc-400">How it works</div>
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-              <span className="mono text-[12px] text-zinc-300">1 · Create your twin</span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-black">bio → identity</span>
-            </div>
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-              <span className="mono text-[12px] text-zinc-300">2 · Ask, talk, or go live</span>
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-zinc-200">in your voice</span>
-            </div>
-            <div className="flex items-center justify-between rounded-xl border border-accent/20 bg-accent/10 px-4 py-3">
-              <span className="mono text-[12px] text-emerald-200">3 · Check the evidence</span>
-              <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-black">scored 0–5</span>
+          )}
+          <div className="mt-6" role="tablist" aria-label="What should your twin do?">
+            <div className="inline-flex rounded-full border border-white/10 bg-black/30 p-1">
+              {MODES.map((m) => (
+                <button key={m.id} role="tab" aria-selected={mode === m.id} onClick={() => setMode(m.id)}
+                  className={`inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold transition ${mode === m.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+                  {m.label}
+                </button>
+              ))}
             </div>
           </div>
-          <p className="mt-4 text-[13px] leading-relaxed text-zinc-400">
-            Facts stay separate from inferences, every answer cites its evidence, and the final call is always yours.
+          <form onSubmit={dispatch} className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <label htmlFor="command" className="sr-only">Ask your twin</label>
+            <input id="command" value={command} onChange={(e) => setCommand(e.target.value)}
+              placeholder={MODES.find((m) => m.id === mode)?.placeholder}
+              className="min-h-12 flex-1 rounded-full border border-white/10 bg-black/40 px-5 text-[15px] text-white outline-none placeholder:text-zinc-400 focus:border-white/40" />
+            <button type="submit" disabled={!selected}
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-black transition hover:bg-zinc-200 disabled:opacity-50">
+              {MODES.find((m) => m.id === mode)?.cta} →
+            </button>
+          </form>
+          <p className="mt-3 text-xs leading-relaxed text-zinc-400">
+            One persona, every mode — the twin you pick here is the twin that decides, talks, and goes live.
           </p>
-        </div>
-
-        <div className="bento bento-green col-span-12 md:col-span-5 p-6">
-          <div className="flex items-center justify-between">
-            <span className="mono text-[11px] font-bold uppercase tracking-widest text-black/60">New drop</span>
-            <span className="rounded-full bg-black px-3 py-1 text-[10px] font-bold text-white">VOICE + FACE</span>
-          </div>
-          <h3 className="display mt-4 text-[32px] leading-[0.9] text-black">Your voice.<br />Your face. Live.</h3>
-          <p className="mt-3 text-[13px] leading-relaxed text-black/70">Clone your voice and likeness once — your twin speaks verdicts, talks, and goes live as you, on every platform at once.</p>
-          <div className="mt-5 flex gap-2">
-            <div className="h-8 w-8 rounded-full bg-black" />
-            <div className="h-8 w-8 rounded-full border border-black/10 bg-white" />
-            <div className="h-8 w-8 rounded-full bg-violet" />
-          </div>
-        </div>
-
-        <div className="bento col-span-12 md:col-span-7 p-0 overflow-hidden">
-          <div className="grid grid-cols-3">
-            <div className="border-r border-white/10 p-5">
-              <div className="mono text-[10px] uppercase text-zinc-400">Latency</div>
-              <div className="display mt-2 text-2xl text-white">~1.2s</div>
-              <div className="mono mt-1 text-[11px] text-zinc-400">parallel fan-out</div>
-              <div className="mt-3 h-1 w-full rounded-full bg-white/10"><div className="h-full w-[82%] rounded-full bg-accent" /></div>
-            </div>
-            <div className="border-r border-white/10 p-5">
-              <div className="mono text-[10px] uppercase text-zinc-400">Evidence</div>
-              <div className="display mt-2 text-2xl text-white">scored</div>
-              <div className="mono mt-1 text-[11px] text-zinc-400">0‒5 scale</div>
-              <div className="mt-3 flex gap-1">{[1,1,1,0.6,0.2].map((o,i)=><div key={i} className="h-1 flex-1 rounded-full bg-white" style={{ opacity:o }} />)}</div>
-            </div>
-            <div className="p-5">
-              <div className="mono text-[10px] uppercase text-zinc-400">Voice</div>
-              <div className="display mt-2 text-2xl text-white">Lab</div>
-              <div className="mono mt-1 text-[11px] text-zinc-400">TTS · STT · Wave</div>
-              <div className="mt-3"><Waveform bars={18} animated className="text-white/40" /></div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </section>
+      )}
 
       {error && (
         <div className="mt-8 flex flex-wrap items-center gap-3">
