@@ -17,6 +17,10 @@ cd apps/web && npx tsc --noEmit && npx eslint . && npm run build
 ```
 
 ## Conventions
+- **Hackathon build = Meta + open-source only.** No third-party AI APIs
+  (voice, avatar, LLM, image) — regardless of how optional or off-by-default.
+  "Like product X" means match its UX quality with our stack, never integrate
+  X. Check this rule + docs/DECISIONS.md before adding any external AI service.
 - All model calls server-side; browsers never see `MODEL_API_KEY`.
 - Verified facts and inferred hypotheses are separate types end-to-end.
 - Fixture (keyless) output is always labeled, never presented as live.

@@ -125,3 +125,17 @@
   No biometric data ever leaves the machine — stronger story than API dubbing.
 - Honest tiering: CPU boxes get portrait + cloned voice in minutes; true
   lip-sync is GPU-only and the UI/player always labels which mode rendered.
+
+## Correction: hosted voice API added then removed (2026-10-28)
+
+- During a voice-quality push ("make it like the ElevenLabs catalogue"), an
+  optional, off-by-default ElevenLabs integration was coded (catalogue +
+  speak endpoint behind `ELEVENLABS_API_KEY`, never configured, never used
+  with real data). This contradicted the standing project rule above
+  (owner-directed open-source + Meta only, proprietary cloning APIs
+  deliberately rejected) and risked hackathon eligibility/spirit.
+- Caught by the owner, fully removed the same day (commit `a6f2cde`); the
+  catalogue-grade need is met by Kokoro (Apache 2.0) + OpenVoice clones.
+- Process fix, now in CLAUDE.md: any new external AI service must be checked
+  against this log and the hackathon rule first. It was never pushed to the
+  shared remote while present (local commits only) and HEAD is clean.
