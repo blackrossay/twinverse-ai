@@ -419,7 +419,6 @@ export const rerunRun = (
 export type VoiceCatalogue = {
   cloned: { ready: boolean; engine_ready: boolean; likeness_present: boolean; label: string };
   studio: { ready: boolean; voices: { id: string; name: string }[]; label: string };
-  elevenlabs: { configured: boolean; voices: { id: string; name: string; category: string }[]; label: string };
   instant: { ready: boolean; label: string };
 };
 export const getVoiceCatalogue = () => api<VoiceCatalogue>("/api/voice/catalogue");

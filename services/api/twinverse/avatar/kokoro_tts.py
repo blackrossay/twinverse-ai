@@ -1,4 +1,4 @@
-"""Kokoro TTS (Apache 2.0): ElevenLabs-style catalogue voices, fully local.
+"""Kokoro TTS (Apache 2.0): hosted-catalogue-grade voices, fully local.
 
 82M-parameter open model, ~realtime on CPU, 50+ catalogue voices. Used two
 ways: (1) studio instant voices — fast, natural, no cloning; (2) as the

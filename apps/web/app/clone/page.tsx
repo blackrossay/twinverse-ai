@@ -458,14 +458,10 @@ export default function ClonePage() {
             </div>
           ))}
 
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-            <span className="text-sm font-semibold text-white">Hosted catalogue (ElevenLabs-style)</span>
-            <span className="text-xs text-zinc-300">
-              {catalogue?.elevenlabs.configured
-                ? `${catalogue.elevenlabs.voices.length} voices available on this server.`
-                : "Optional — set ELEVENLABS_API_KEY on the server to enable studio voices. Your clone never depends on it."}
-            </span>
-          </div>
+          <p className="text-xs leading-relaxed text-zinc-400">
+            Everything above runs on open-source models on your own infra — no
+            third-party voice APIs, in keeping with the hackathon build.
+          </p>
         </div>
       </Section>
 
